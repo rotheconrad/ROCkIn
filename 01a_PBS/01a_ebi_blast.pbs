@@ -1,0 +1,21 @@
+#PBS -N EBI-BLAST
+#PBS -l nodes=1:ppn=1
+#PBS -l mem=1gb
+#PBS -l walltime=24:00:00
+#PBS -q YOUR_QUEUE     
+#PBS -A YOUR_ACCOUNT
+#PBS -o 00a_ebi_blast.out
+#PBS -e 00a_ebi_blast.err
+
+cd $PBS_O_WORKDIR
+
+# path to ebi blast script
+ebi_blast='Path/to/GitHub/repo/02_Python/01a_ebi_ncbiblast.py'
+
+# executes the command Run 30 sequences at a time from 1 fasta file.
+python ${ebi_blast} --email YOUR_EMAIL --program blastp --stype protein \
+--sequence $fasta --database uniprotkb --multifasta --useSeqId --maxJobs 30 --pollFreq 60 \
+--outformat ids --exp 10 --alignments 1000
+
+## Run Log:
+## qsub -v fasta=RefSeqs.faa Path/to/GitHub/repo/01a_PBS/01a_ebi_blast.pbs

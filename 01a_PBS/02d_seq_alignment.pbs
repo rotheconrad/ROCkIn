@@ -1,0 +1,24 @@
+#PBS -N ClustalO
+#PBS -l nodes=1:ppn=12
+#PBS -l mem=10gb
+#PBS -l walltime=4:00:00
+#PBS -q YOUR_QUEUE
+#PBS -A YOUR_ACCOUNT
+#PBS -o 02d_ClustalO.out
+#PBS -e 02d_ClustalO.err
+
+# This script builds the gene clusters
+cd $PBS_O_WORKDIR
+
+# Load your servers clustalo module or clustalo must be available in your PATH
+
+if [ ! -s ${verified}.aln ]
+  then
+	clustalo -i $verified -o ${verified}.aln
+fi
+
+clustalo -i $newseqs -o ${newseqs}.aln --profile1 ${verified}.aln --threads 12
+
+## Run Log:
+## qsub -v verified=,newseqs= /Path/to/GitHub/repo/01a_PBS/02d_seq_alignment.pbs
+

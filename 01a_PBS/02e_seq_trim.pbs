@@ -1,0 +1,23 @@
+#PBS -N TrimAl
+#PBS -l nodes=1:ppn=1
+#PBS -l mem=5gb
+#PBS -l walltime=12:00:00
+#PBS -q YOUR_QUEUE
+#PBS -A YOUR_ACCOUNT
+#PBS -o 02e_seq_trim.out
+#PBS -e 02e_seq_trim.err
+
+# Change to working directory
+cd $PBS_O_WORKDIR
+
+# Load your servers trimal module, make trimal available in your path, or provide the path to trimal as a variable "trimal"
+trimal=/Path/to/your/trimal/source/./trimal
+
+${trimal} -in ${input} -out ${output} -resoverlap 0.75 -seqoverlap 80 -automated1
+
+## Param key:
+## -resoverlap: Minimum overlap of a positions with other positions in the column to be considered a "good position". Range: [0 - 1]. (see User Guide).
+## -seqoverlap: Minimum percentage of "good positions" that a sequence must have in order to be conserved. Range: [0 - 100](see User Guide).
+
+## Run Log ##
+## qsub -v input=fasta.aln,output=fasta.aln /Path/to/GitHub/repo/01a_PBS/02e_seq_trim.pbs

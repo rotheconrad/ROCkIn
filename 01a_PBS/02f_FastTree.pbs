@@ -1,0 +1,19 @@
+#PBS -N FastTree
+#PBS -l nodes=1:ppn=1
+#PBS -l mem=5gb
+#PBS -l walltime=1:00:00:00
+#PBS -q YOUR_QUEUE
+#PBS -A YOUR_ACCOUNT
+#PBS -o 02f_FastTree_${n}.out
+#PBS -e 02f_FastTree_${n}.err
+
+# Change to working directory
+cd $PBS_O_WORKDIR
+
+# Load your servers fasttree module or make FastTree available in your PATH
+
+FastTree $input > $output
+
+## Run Log ##
+## qsub -v input=fasta.aln,output= /Path/to/GitHub/repo/01a_PBS/02f_FastTree.pbs
+
