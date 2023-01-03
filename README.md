@@ -28,6 +28,7 @@ To use the provided PBS or Sbatch scripts replace "PATH/to/GitHub/repo" with the
 
 #### Python Packages
 
+- [xlmtramp2](https://github.com/tBaxter/xmltramp2)
 - [pandas](https://pandas.pydata.org/) 
 - [numpy](https://numpy.org/)
 - [matplotlib](https://matplotlib.org/)
@@ -38,6 +39,7 @@ To use the provided PBS or Sbatch scripts replace "PATH/to/GitHub/repo" with the
 
 #### References
 
+1. Aaron Swartz, Kristian Glass, T. Carter Baxter. https://github.com/tBaxter/xmltramp2, 2002
 1. McKinney W, others. Data structures for statistical computing in python. In: Proceedings of the 9th Python in Science Conference. 2010. p. 51–6.
 1. Harris CR, Millman KJ, van der Walt SJ, Gommers R, Virtanen P, Cournapeau D, et al. Array programming with NumPy. Nature. 2020;585:357–62.
 1. Hunter JD. Matplotlib: A 2D graphics environment. Computing in science & engineering. 2007;9(3):90–5.
