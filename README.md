@@ -49,7 +49,7 @@ When curating sequences, it is insightful to look at a multiple sequence alignme
  python /Path/to/GitHub/repo/02_Python/00a_PIM_clustered_heatmap.py -h
  ```
 
- ![Example Figure of sequence similarity heatmap](https://github.com/KGerhardt/ROCkOut/blob/main/ROCkIn/05_Example_Figs/00_Example-A.png)
+ ![Example Figure of sequence similarity heatmap](https://github.com/rotheconrad/ROCkIn/blob/main/05_Example_Figs/00_Example-A.png)
 
 Once you have made your selections, create a fasta formatted file with the amino acid sequences and short meaningful defline names. We will refer this file of curated sequences as RefSeqs.faa. Example file can be found in the 06_Example_Files directory of this repo.
 
@@ -160,7 +160,7 @@ python ${scripts}/02b_Blastp_filter_hist.py -i 02a_tree_prep/FILTER_EBI_BLAST_MA
 python ${scripts}/02c_Get_Fasta_from_Filtered_Blast.py -b 02a_tree_prep/FILTER_EBI_BLAST_MATCHES.fltrd.blast -q 02a_tree_prep/DEDUP_EBI_BLAST_MATCHES.faa -o 02a_tree_prep/FILTER_EBI_BLAST_MATCHES.faa
 ```
 
-![Example histogram figures for Blast sequence alignments.](https://github.com/KGerhardt/ROCkOut/blob/main/ROCkIn/05_Example_Figs/02_Example-B.png)
+![Example histogram figures for Blast sequence alignments.](https://github.com/rotheconrad/ROCkIn/blob/main/05_Example_Figs/02_Example-B.png)
 
 PBS example:
 ```bash
@@ -318,5 +318,5 @@ python ${scripts}/02g_Tree_Distance_Cluster.py -i 02a_tree_prep/Tree_FastTree.nw
 python ${scripts}/02i_Plot_Annotated_Tree_v2.py -n 02a_tree_prep/02a_tree_prep/Tree_FastTree.nwk -a 02c_Annoted_Tree/Cluster_annotations_annotated.tsv -o ROCker_prep_tree.pdf
 ```
 
-![Example phylogenetic tree labelled by assigned cluster/clade.](https://github.com/KGerhardt/ROCkOut/blob/main/ROCkIn/05_Example_Figs/07_Example-C.png)
+![Example phylogenetic tree labelled by assigned cluster/clade.](https://github.com/rotheconrad/ROCkIn/blob/main/05_Example_Figs/07_Example-C.png)
 
