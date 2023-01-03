@@ -326,7 +326,7 @@ sbatch --export input=02a_tree_prep/my_MSA_trimmed.aln,output=02a_tree_prep/Tree
 
 *Step 7 & 8 are combined.*
 
-Create an organized and annotated tsv file to explore clustered clades and make decisions for ROCkOut inputs. The annotation informat is pulled from the fasta deflines where we stored the information from the .dat files back at the begining and organized into columns. The branch distances are calculated between all sequences and the HDBSCAN algorithm is used to cluster the sequences into initial clades.
+Create an organized and annotated tsv file to explore clustered clades and make decisions for ROCkOut inputs. The annotation information is pulled from the fasta deflines (where we stored the information from the .dat files back at the begining) and organized into columns. The branch distances are calculated between all sequences and the HDBSCAN algorithm is used to cluster the sequences into initial clades.
 
 This step creates a .tsv (Easily opened in Excel) that contains the UniProt IDs, assigned cluster, functional annotation, and taxonomic classification for each sequence. It aslo plots a tree figure with the leaf nodes color labelled by assigned cluster. The .tsv file follows the order of the tree figure. The sequences in the .tsv file can be reodered/reassigned based on visual inspection of the tree figure, and the researcher can decide clades for positive and/or negative reference sequences based on these results. Once the researcher has made their selections, simply copy and paste the UniProt IDs into a positive.txt and a negative.txt file (one ID per line). Then insert the text files into the ROCkOut pipeline.
 
