@@ -1,0 +1,246 @@
+ROCin notes for erm(B) gene.
+
+#######
+Step 00: Curate sequences
+#################################
+
+a. Find and retrieve sequences
+
+erm genes are in the macrolide family annotated as
+23S rRNA (adenine(2058)-N(6))-methyltransferase
+
+Multilple classes or erm genes as letters:
+A, B, C, D, E, F, G, H, K, N, O, Q, R, S, T, U, V, W, X, Y, Z
+and some are numbered between 30 and 50 ie erm(42).
+
+Search for erm genes at ncbi refgene database returned 94 results
+https://www.ncbi.nlm.nih.gov/pathogens/refgene/#erm
+
+Download fasta sequences and rename files.
+
+b. Explore sequence diversity
+
+Use EBI Clustalo https://www.ebi.ac.uk/Tools/msa/clustalo/ 
+
+- Select Pearson/FASTA format. Copy and paste sequences.
+- Download alignment file. Copy and paste to text file. Open in AliView.
+- Select Results Viewers tab.
+- Select send to simple phylogeny.
+- Turn on options distance correction, exclude gaps, Neighbour-joing, and percent identity matrix.
+- Select view phylogenetic tree file. Copy and paste to text file (.nwk). Open in FigTree
+- Select result summary tab.
+- Download the *.pim file for the percent identity matrix.
+
+From local directory: /Users/rothconrad/OneDrive - Georgia Institute of Technology/00_ROCker/04_mphA/01_pre_ROCin
+
+> python ../../00f_ROCin/02_Python/00a_PIM_clustered_heatmap.py -i NCBI_refgene_mph.faa.pim -o NCBI_refgene_mph.faa.dst.pdf
+
+
+#######
+Step 01: UniProt sequence search
+#################################
+
+Run a search of the Mph gene sequences against the UniProt database.
+This is to look for extended sequence diversity that hasn't been curated.
+
+Select 1 representative sequence from each class or cluster of mph gene.
+Create new file named NCBI_refgene_erm_select.faa
+
+Upload the file to PACE: /storage/home/hcoda1/9/rconrad6/p-ktk3-0/02_ROCker/05_erm/00b_curated_seqs
+
+# setup directories
+> mkdir 00a_log 01b_ebi_dat 04a_RAxML-Distance 05b_Clade_info_bootstrap 00b_curated_seqs 01c_ebi_fasta 04b_RAxML-Bootstrap 05c_Clade_info_fasttree 01a_ebi_blast_ids 02a_tree_prep 05a_Clade_info_distance
+
+a. search uniprot database
+from: /storage/home/hcoda1/9/rconrad6/p-ktk3-0/02_ROCker/05_erm
+# this returns UniProt IDs for sequence matches
+> qsub -v fasta=00b_curated_seqs/NCBI_refgene_erm_select.faa ../00b_PBS/01a_ebi_blast.pbs
+# move files to 01a_ebi_blast_ids folder
+> mv *.ids.txt 01a_ebi_blast_ids/
+
+b. retrieve fasta files for matches
+# first download the *.dat file from EBI for each sequence match with dbfetch
+> for f in 01a_ebi_blast_ids/*; do odir='01b_ebi_dat'; gene=`basename $f | cut -d. -f1`; echo $gene; if [ ! -d ${odir}/${gene} ]; then mkdir ${odir}/${gene}; fi; qsub -v input=${f},odir=${odir},gene=${gene} ../00b_PBS/01b_ebi_dbfetch.pbs; done
+
+# parse the .dat file to get the sequence in fasta format
+# place relevant info in the sequence deflines we will use downstream
+> for d in 01b_ebi_dat/*; do n=`basename $d`; echo $n; python ../00c_Scripts/01d_parse_dat_file.py -i $d -o 01c_ebi_fasta/${n}.fasta; done
+
+# concatenate gene fastas into single fasta file
+> cat 01c_ebi_fasta/*.fasta >> 01c_ebi_fasta/00_erm_all_ebi_matches.fa
+
+#######
+Step 02: Deduplicate, Filter, ClusterReps, align, trim, tree -> annotated.tsv
+#################################
+
+a. Deduplicate
+
+Since we have multiple verified sequences that we searched to UniProt, we likely have found overlapping search results. Concatenate fasta files of all search result sequences and deduplicate by UniProt ID. I wrote a Python script to deduplicate the concatenated fasta
+
+> python ../00c_Scripts/02a_Remove_Duplicate_Fasta_Entries.py -f 01c_ebi_fasta/00_erm_all_ebi_matches.fa -o 02a_tree_prep/00_erm_dedup_ebi.fa
+
+		Total sequences in file: 55000
+		Duplicates Removed: 49221
+		Unique sequences retained: 5779
+
+b. Filter
+
+The initial sequence search does not have great options to filter the matches that are returned. As such, it usually returns many spurious matches. Additionally, we do not need to keep sequences that are 100% identical to our curated sequences as this does not add any new information for the ROCker model.
+
+To filter our search results, I run Blastp locally using the curated sequence as the reference database and the search results as the query.
+
+I wrote a Python script that does 3 filters:
+	1) Remove matches >= 98% identity to verified sequences
+	2) Removes matches <= 30% identity to verified sequences
+	3) Remove matches with <= 50% sequence alignment (alignment length / query sequence length).
+
+It also plots histograms of each parameter post filtering and can be rerun with different filtering options if neccessary.
+
+I wrapped it into a pbs script.
+
+> qsub -v ref=00b_curated_seqs/NCBI_refgene_erm_select.faa,qry=02a_tree_prep/00_erm_dedup_ebi.fa,out=02a_tree_prep/01_erm_fltr_ebi,name=erm ../00b_PBS/02b_Blastp.pbs
+
+> cat 00a_log/02b_BlastP_erm.out
+
+Total number of entries in blast file: 58925
+Number of entries failing the filters: 14388
+Number of entries passing the filters: 44537
+Number of duplicate blast matches passing filter to remove: 38798
+Number of best hit entries written to new file: 5739 
+
+c. ClusterReps
+
+Since we still have a lot of sequences lets dereplicate the set some.
+
+mmseqs clustering at 90% amino acid sequence similarity
+
+> qsub -v infile=02a_tree_prep/01_erm_fltr_ebi_blast_fltrd.fasta,odir=02a_tree_prep,n=mph ../00b_PBS/02c_mmseqs.pbs
+
+> grep -c '>' 02a_tree_prep/02_mmseqs_reps.fasta
+
+Representative sequences retained: 2458
+
+d. Align
+
+sequence alignment with clustal omega
+
+For this I am first building an alignment with the 10 curated sequences and then fitting the searched sequences to that alignment. This runs clustal omega twice.
+
+> qsub -v verified=00b_curated_seqs/NCBI_refgene_erm_select.faa,newseqs=02a_tree_prep/02_mmseqs_reps.fasta,n=mph ../00b_PBS/02d_seq_alignment.pbs
+
+# sequences before trimming
+> grep -c '>' 02a_tree_prep/02_mmseqs_reps.fasta.aln
+
+Sequences before trimming: 2513 (2458 searched + 55 curated)
+
+e. trim
+
+trim the alignment with trimmal
+
+Before building a phylogenetic tree, MSAs should be cleaned to removed spurious sequences and columns consisting mainly of gaps.
+
+I'm using trimmal for this
+
+> qsub -v input=02a_tree_prep/02_mmseqs_reps.fasta.aln,output=02a_tree_prep/03_trimmed.fasta.aln,n=mph ../00b_PBS/02e_seq_trim.pbs
+
+# count sequences after trimming
+> grep -c '>' 02a_tree_prep/03_trimmed.fasta.aln
+
+Sequences after trimming: 2512
+
+clean up sequence names for the tree.
+
+> python ../00c_Scripts/02e_clean_seq_names.py -i 02a_tree_prep/03_trimmed.fasta.aln
+
+f. tree
+
+Build phylogenetic tree with RAxML
+
+# single ML Distance tree
+> qsub -v input=02a_tree_prep/03_trimmed.fasta.aln,output=04a_RAxML-Distance,name=erm_distance ../00b_PBS/02f_RAxML_AminoAcid-Distance.pbs 
+
+# bootstrapped ML tree
+> qsub -v input=02a_tree_prep/03_trimmed.fasta.aln,output=04b_RAxML-Bootstrap,name=erm_bootstrap ../00b_PBS/02f_RAxML_AminoAcid-Bootstrap.pbs
+
+# Fasttree - approximate maximum likelihood tree
+> qsub -v input=02a_tree_prep/03_trimmed.fasta.aln,output=04c_erm_FastTree.nwk,n=erm ../00b_PBS/02f_FastTree.pbs 
+
+g. annotated.tsv
+
+create annotated tsv file to explore clades.
+
+To further inform our decisions from the tree, we want to know which species and functional annotations are in each clade. To do this I wrote python code that uses the branch distance from the tree to create a distance matrix which is used in clustering algorithms. It gets clades from the the tree as clusters and creates a tsv file with species and annotation information for each sequence.
+
+# concatenate the curated sequences and the dereplicated filtered searched sequences
+> cat 00b_curated_seqs/NCBI_refgene_erm_select.faa 02a_tree_prep/02_mmseqs_reps.fasta >> 02a_tree_prep/04_erm_sequence_set.fasta
+
+# convert nwk to distance matrix, cluster the matrix and add annotations
+
+# Fasttree
+> python ../00c_Scripts/02g_Tree_Distance_Cluster.py -i 04c_erm_FastTree.nwk -o 05c_Clade_info_fasttree/05c_Clade_info_fasttree -f 02a_tree_prep/04_erm_sequence_set.fasta
+
+# RAxML Bootstrap
+> python ../00c_Scripts/02g_Tree_Distance_Cluster.py -i 04b_RAxML-Bootstrap/RAxML_bestTree.erm_bootstrap.RAxML -o 05b_Clade_info_bootstrap/05b_Clade_info_RAxML_Bootstrap -f 02a_tree_prep/04_erm_sequence_set.fasta 
+
+# RAxML Distance does not work for the tree distance clustering
+
+#######
+Step 03: Build ROCker Models
+#################################
+
+Collect accession numbers for each cluster from 05b_Clade_info_bootstrap_annotated.tsv and create positive and negative text files for each Clade/Cluster to build a ROCker model for. I used Excel and a text editor at this step to create these files. Single column text files from the "Gene_Name" column of the annotated.tsv file. The Gene_Name is the Uniprot accession ID. Remove the REFERENCE SEQUENCEs from these files as they come with NCBI acession numbers and will not be foun in UniProt.
+
+Collect a pos and neg .txt file for each model within a separate directory for each model and upload to PACE cluster.
+
+from: /storage/scratch1/9/rconrad6/ROCkOut/04_erm
+
+> cd Model_1
+> qsub -v P=Model_1_pos.txt,N=Model_1_neg.txt,O=Model_1,n=Model_1 ../../00b_PBS/01_ROCkOut.pbs
+> cd ..
+
+> cd Model_2
+> qsub -v P=Model_2_pos.txt,N=Model_2_neg.txt,O=Model_2,n=Model_2 ../../00b_PBS/01_ROCkOut.pbs
+> cd ..
+
+> cd Model_3
+> qsub -v P=Model_3_pos.txt,N=Model_3_neg.txt,O=Model_3,n=Model_3 ../../00b_PBS/01_ROCkOut.pbs
+> cd ..
+
+> cd Model_4
+> qsub -v P=Model_4_pos.txt,N=Model_4_neg.txt,O=Model_4,n=Model_4 ../../00b_PBS/01_ROCkOut.pbs
+> cd ..
+
+> cd Model_5
+> qsub -v P=Model_5_pos.txt,N=Model_5_neg.txt,O=Model_5,n=Model_5 ../../00b_PBS/01_ROCkOut.pbs
+> cd ..
+
+# Download complete directories for each model to local
+# from: /Users/rothconrad/OneDrive - Georgia Institute of Technology/00_ROCker/04_mphA/04_ROCker_Models
+
+# Load conda environment
+> conda activate ROCkOut
+
+# cd into model directory and run rocker_dash.py
+> cd Model_1
+> python ../../../ROCkOut/rocker_dash.py
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
