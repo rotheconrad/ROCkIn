@@ -1,6 +1,6 @@
 # ROCkIn
 
-The preparation pipeline for building ROCker models with ROCkOut
+The preparation pipeline for building ROCker models with [ROCkOut](https://github.com/KGerhardt/ROCkOut)
 
 This pipeline walks the researcher through the process of collecting the necessary sequence information needed to build and refine ROCker models for any functional gene group of interest. The steps involve a combination of Python, Bash, and bioinformatics tools. Examples are provided for PBS and Sbatch job schedulers for users with access to a compute cluster.
 
@@ -328,7 +328,7 @@ sbatch --export input=02a_tree_prep/my_MSA_trimmed.aln,output=02a_tree_prep/Tree
 
 Create an organized and annotated tsv file to explore clustered clades and make decisions for ROCkOut inputs. The annotation information is pulled from the fasta deflines (where we stored the information from the .dat files back at the begining) and organized into columns. The branch distances are calculated between all sequences and the HDBSCAN algorithm is used to cluster the sequences into initial clades.
 
-This step creates a .tsv (Easily opened in Excel) that contains the UniProt IDs, assigned cluster, functional annotation, and taxonomic classification for each sequence. It aslo plots a tree figure with the leaf nodes color labelled by assigned cluster. The .tsv file follows the order of the tree figure. The sequences in the .tsv file can be reodered/reassigned based on visual inspection of the tree figure, and the researcher can decide clades for positive and/or negative reference sequences based on these results. Once the researcher has made their selections, simply copy and paste the UniProt IDs into a positive.txt and a negative.txt file (one ID per line). Then insert the text files into the ROCkOut pipeline.
+This step creates a .tsv (Easily opened in Excel) that contains the UniProt IDs, assigned cluster, functional annotation, and taxonomic classification for each sequence. It aslo plots a tree figure with the leaf nodes color labelled by assigned cluster. The .tsv file follows the order of the tree figure. The sequences in the .tsv file can be reodered/reassigned based on visual inspection of the tree figure, and the researcher can decide clades for positive and/or negative reference sequences based on these results. Once the researcher has made their selections, simply copy and paste the UniProt IDs into a positive.txt and a negative.txt file (one ID per line). Then insert the text files into the [ROCkOut](https://github.com/KGerhardt/ROCkOut) pipeline.
 
 *The HDBSCAN algorithm assigns many -1's to sequences that fall outside what the algorithm has determined to be the cluster boundaries. The algorithm isn't perfect at building the clades, it is just a quick way to get started. The researcher can quickly reassign -1's into the appropriate clades while making their selections*
 
