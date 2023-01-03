@@ -16,8 +16,6 @@ To use the provided PBS or Sbatch scripts replace "PATH/to/GitHub/repo" with the
 - [RAxML](https://cme.h-its.org/exelixis/web/software/raxml/)
 - [Python](https://www.python.org/)
 
- *Python, it's packages, and all program above can be installed with [Conda](https://docs.conda.io/en/latest/miniconda.html).*
-
  #### References
 
  1. Camacho C, Coulouris G, Avagyan V, Ma N, Papadopoulos J, Bealer K, Madden TL. BLAST+: architecture and applications. BMC bioinformatics. 2009 Dec;10(1):1-9.
@@ -27,6 +25,29 @@ To use the provided PBS or Sbatch scripts replace "PATH/to/GitHub/repo" with the
  1. Price, M.N., Dehal, P.S., and Arkin, A.P. (2010) FastTree 2 -- Approximately Maximum-Likelihood Trees for Large Alignments. PLoS ONE, 5(3):e9490. doi:10.1371/journal.pone.0009490.
  1. A. Stamatakis: "RAxML Version 8: A tool for Phylogenetic Analysis and Post-Analysis of Large Phylogenies". In Bioinformatics, 2014, open access.
  1. Sanner MF. Python: a programming language for software integration and development. J Mol Graph Model. 1999 Feb 1;17(1):57-61.
+
+#### Python Packages
+
+- [pandas](https://pandas.pydata.org/) 
+- [numpy](https://numpy.org/)
+- [matplotlib](https://matplotlib.org/)
+- [seaborn](https://seaborn.pydata.org/)
+- [sklearn](https://scikit-learn.org/stable/)
+- [Bio](https://biopython.org/)
+- [hdbscan](https://hdbscan.readthedocs.io/)
+
+#### References
+
+1. McKinney W, others. Data structures for statistical computing in python. In: Proceedings of the 9th Python in Science Conference. 2010. p. 51–6.
+1. Harris CR, Millman KJ, van der Walt SJ, Gommers R, Virtanen P, Cournapeau D, et al. Array programming with NumPy. Nature. 2020;585:357–62.
+1. Hunter JD. Matplotlib: A 2D graphics environment. Computing in science & engineering. 2007;9(3):90–5.
+1. Waskom ML. Seaborn: statistical data visualization. Journal of Open Source Software. 2021 Apr 6;6(60):3021.
+1. Scikit-learn: Machine Learning in Python, Pedregosa et al., JMLR 12, pp. 2825-2830, 2011.
+1. Cock PA, Antao T, Chang JT, Chapman BA, Cox CJ, Dalke A, Friedberg I, Hamelryck T, Kauff F, Wilczynski B and de Hoon MJL (2009) Biopython: freely available Python tools for computational molecular biology and bioinformatics. Bioinformatics, 25, 1422-1423
+1. L. McInnes, J. Healy, S. Astels, hdbscan: Hierarchical density based clustering In: Journal of Open Source Software, The Open Journal, volume 2, number 11. 2017
+
+ *Python, it's packages, and all program above can be installed with [Conda](https://docs.conda.io/en/latest/miniconda.html).*
+
 
 # PART 00: Curate reference sequences
 
@@ -53,7 +74,7 @@ When curating sequences, it is insightful to look at a multiple sequence alignme
 
 Once you have made your selections, create a fasta formatted file with the amino acid sequences and short meaningful defline names. We will refer this file of curated sequences as RefSeqs.faa. Example file can be found in the 06_Example_Files directory of this repo.
 
-# PART 01 01: UniProt sequence search
+# PART 01: UniProt sequence search
 
 Since ROCker models are used with metagenomics data, we want to account for broad sequence diversity around the reference sequences. To do this, we will perform a BLAST search of UniProt's SwissProt and TrEMBL databases.
 
@@ -117,11 +138,22 @@ cat 01c_ebi_fasta/MCR-* >> 01c_ebi_fasta/ALL_EBI_BLAST_MATCHES.faa
 
 At this point we have a single file (ALL_EBI_BLAST_MATCHES.faa) containing all the fasta sequences from the UniProt database that returned a match to our curated RefSeqs.faa.
 
-# PART 02: Deduplicate, Filter, ClusterReps, align, trim, tree -> annotated.tsv
+# PART 02: Select sequences for model training
+
+Part 2 is divided into the following series of steps:
+
+1. Remove duplicate sequences from ALL_EBI_BLAST_MATCHES.faa.
+1. Filter the sequences to remove poor matches.
+1. Cluster the sequences and select a representative sequence for each cluster.
+1. Generate a multiple sequence alignment (MSA).
+1. Trim/clean the multiple sequence alignment.
+1. Build phylogenetic tree.
+1. Compute branch distance and cluster sequences into clades.
+1. Generate annotation file and tree figure labeled by cluster.
 
 Our goal is to build a phylogenetic tree with our curated sequences (RefSeqs.faa) and known surrounding sequence diversity (ALL_EBI_BLAST_MATCHES.faa) that we will use to make decisions about positive and negative sequence sets for training the ROCker model.
 
-#### Step 1: Deduplicate
+#### Step 1: Remove duplicates
 
 Since we have multiple verified sequences that we searched to UniProt, we likely have found overlapping search results. I wrote a Python script to deduplicate the concatenated fasta.
 
@@ -172,7 +204,7 @@ Sbatch Example:
 sbatch --export ref=RefSeqs.faa,qry=02a_tree_prep/DEDUP_EBI_BLAST_MATCHES.faa,out=02a_tree_prep/FILTER_EBI_BLAST_MATCHES.faa /Path/to/GitHub/repo/01b_Sbatch/00b_BlastP.sbatch
 ```
 
-#### Step 3: ClusterReps
+#### Step 3: Cluster and select representative sequences
 
 If you have fewer than hundreds of searched sequences (FILTER_EBI_BLAST_MATCHES.faa) at this point you can skip this step. This step reduces the number of sequences by clustering them at 90% amino acid sequence similarity and choosing one reference sequence for each cluster.
 
@@ -204,7 +236,7 @@ Sbatch Example:
 sbatch --export infile=02a_tree_prep/01_MCR_fltr_ebi_blast_fltrd.fasta,odir=02a_tree_prep /Path/to/GitHub/repo/01b_Sbatch/27c_MMSeqs2_Cluster.sbatch
 ```
 
-#### Step 4: Align
+#### Step 4: Multiple Sequence Alignment
 
 We need a good multiple sequence alignment to build the phylogenetic tree. We'll start with an alignment using only the curated sequences (RefSeqs.faa). We can check this alignment with something like [AliView](https://ormbunkar.se/aliview/) and make manual adjustments if necessary, then we'll align the searched sequences (mmseqs_reps.fasta) to this alignment.
 
@@ -225,7 +257,7 @@ Sbatch Example:
 sbatch --export verified=RefSeqs.faa,newseqs=02a_tree_prep/mmseqs_reps.fasta /Path/to/GitHub/repo/01b_Sbatch/02d_seq_alignment.sbatch
 ```
 
-#### Step 5: Trim
+#### Step 5: Trim/Clean Multiple Sequence Alignment
 
 Before building a phylogenetic tree, MSAs should be cleaned to removed spurious sequences and columns consisting mainly of gaps. TrimAl's algorithm does a pretty good and quick job, but it is still recommended to inspect the alignment manually as well with something like [AliView](https://ormbunkar.se/aliview/).
 
@@ -262,7 +294,7 @@ Sbatch Example:
 sbatch --export input=02a_tree_prep/my_MSA.aln,output=02a_tree_prep/my_MSA_trimmed.aln /Path/to/GitHub/repo/01b_Sbatch/02e_seq_trim.sbatch
 ```
 
-#### Step 6: Tree
+#### Step 6: Build Phylogenetic Tree
 
 Now that we have a good multiple sequence alignment, we are ready to build the tree. Here is an example with FastTree and RAxML. FastTree is recomended unless you are using a cluster. RAxML has very long run times. This step will provide you with Newick formated files than can be viewed/edited with tools such as [FigTree](http://tree.bio.ed.ac.uk/software/figtree/) or [iTol](https://itol.embl.de/).
 
@@ -287,16 +319,19 @@ sbatch --export input=02a_tree_prep/my_MSA_trimmed.aln,output=02a_tree_prep/Tree
 sbatch --export input=02a_tree_prep/my_MSA_trimmed.aln,output=02a_tree_prep/Tree_FastTree.nwk /Path/to/GitHub/repo/01b_Sbatch/02f_FastTree.sbatch
 ```
 
-#### Step 7: Organize annotations and plot phylogenetic tree with cluster/clade labels
+#### Step 7: Compute branch distance and cluster sequences into clades.
+#### Step 8: Generate annotation file and tree figure labeled by cluster.
 
-Create an organized an annotated tsv file to explore clustered clades and make decisions for ROCkOut inputs. The annotation informat is pulled from the fasta deflines where we stored the information from the .dat files back at the begining and organized into columns. The branch distances are calculated between all sequences and the HDBSCAN algorithm is used to cluster the sequences into initial clades.
+*Step 7 & 8 are combined.*
+
+Create an organized and annotated tsv file to explore clustered clades and make decisions for ROCkOut inputs. The annotation informat is pulled from the fasta deflines where we stored the information from the .dat files back at the begining and organized into columns. The branch distances are calculated between all sequences and the HDBSCAN algorithm is used to cluster the sequences into initial clades.
 
 This step creates a .tsv (Easily opened in Excel) that contains the UniProt IDs, assigned cluster, functional annotation, and taxonomic classification for each sequence. It aslo plots a tree figure with the leaf nodes color labelled by assigned cluster. The .tsv file follows the order of the tree figure. The sequences in the .tsv file can be reodered/reassigned based on visual inspection of the tree figure, and the researcher can decide clades for positive and/or negative reference sequences based on these results. Once the researcher has made their selections, simply copy and paste the UniProt IDs into a positive.txt and a negative.txt file (one ID per line). Then insert the text files into the ROCkOut pipeline.
 
 *The HDBSCAN algorithm assigns many -1's to sequences that fall outside what the algorithm has determined to be the cluster boundaries. The algorithm isn't perfect at building the clades, it is just a quick way to get started. The researcher can quickly reassign -1's into the appropriate clades while making their selections*
 
 ```bash
-# concatenate the curated sequences and the dereplicated filtered searched sequences
+# concatenate the curated sequences and the dereplicated and filtered searched sequences
 cat RefSeqs.faa 02a_tree_prep/mmseqs_reps.fasta >> 02a_tree_prep/final_sequence_set.fasta
 
 # setup directory
