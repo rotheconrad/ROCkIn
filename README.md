@@ -332,6 +332,8 @@ This step creates a .tsv (Easily opened in Excel) that contains the UniProt IDs,
 
 *The HDBSCAN algorithm assigns many -1's to sequences that fall outside what the algorithm has determined to be the cluster boundaries. The algorithm isn't perfect at building the clades, it is just a quick way to get started. The researcher can quickly reassign -1's into the appropriate clades while making their selections*
 
+*DBSCAN is a clustering algorithm that works by finding data points that are all within a "step" of at least one other point and putting them into a cluster. A cluster is therfoew made up of points that can all be walked to by taking steps on points within the cluster. When no new points can be reached by taking a single step, a new cluster is started.*
+
 ```bash
 # concatenate the curated sequences and the dereplicated and filtered searched sequences
 cat RefSeqs.faa 02a_tree_prep/mmseqs_reps.fasta >> 02a_tree_prep/final_sequence_set.fasta
