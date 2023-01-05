@@ -1,18 +1,46 @@
-ROCin notes for mcr genes.
+ROCkIn notes for mcr genes.
 
 Working folder: 03a_mcr (PACE)
 
-I collected a set of 103 seqs from the ncbi refgene database.
-I refer to these as the curated mcr sequences.
-See pre-ROCin notes for details.
+###############################################################################
+#######
+Step 00: Curate sequences
+#################################
+###############################################################################
 
+a. Find and retrieve sequences
 
+There are 10 classes of mcr genes with multiple squence variants per class.
+They are designated as mcr 1.1, mcr 1.2, mcr 2.1, mcr 2.2, and etc.
+
+Search for mcr genes at ncbi refgene database returned 103 results
+https://www.ncbi.nlm.nih.gov/pathogens/refgene/#mcr
+
+Download fasta sequences and rename files. These are referred to as the curated or reference sequences (RefSeqs.faa)
+
+b. Explore sequence diversity
+
+Use EBI Clustalo https://www.ebi.ac.uk/Tools/msa/clustalo/ 
+
+- Select Pearson/FASTA format. Copy and paste sequences.
+- Download alignment file. Copy and paste to text file. Open in AliView.
+- Select Results Viewers tab.
+- Select send to simple phylogeny.
+- Turn on options distance correction, exclude gaps, Neighbour-joing, and percent identity matrix.
+- Select view phylogenetic tree file. Copy and paste to text file (.nwk). Open in FigTree
+- Select result summary tab.
+- Download the *.pim file (PIM) for the percent identity matrix.
+
+> python 00a_PIM_clustered_heatmap.py -i PIM -o RefSeqs.faa.dst.pdf
+
+###############################################################################
 #######
 Step 01: UniProt sequence search
 #################################
+###############################################################################
 
-Run a search of the curated mcr sequences against the UniProt database.
-This is to look for extended sequence diversity that hasn't been curated.
+Run a search of the curated mcr sequences (RefSeqs) against the UniProt database.
+This is to look for extended sequence diversity.
 
 I selected 1 representative sequence from each of 10 mcr clades.
 Sequences within clades are highly similar and won't benefit the search.
@@ -43,16 +71,18 @@ from: /storage/home/hcoda1/9/rconrad6/p-ktk3-0/02_ROCker/03a_mcr
 # concatenate to single fasta file
 > cat 01c_ebi_fasta/MCR-* >> 01c_ebi_fasta/00_MCR_all_ebi_matches.fa
 
-
+###############################################################################
 #######
 Step 02: Deduplicate, Filter, ClusterReps, align, trim, tree -> annotated.tsv
 #################################
+###############################################################################
 
 # setup directories
 > mkdir 02a_tree_prep
 
-a. Deduplicate
 #######
+a. Deduplicate
+###############################################################################
 
 Since we have multiple verified sequences that we searched to UniProt, we likely have found overlapping search results. Concatenate fasta files of all search result sequences and deduplicate by UniProt ID. I wrote a Python script to deduplicate the concatenated fasta
 
@@ -64,8 +94,9 @@ Since we have multiple verified sequences that we searched to UniProt, we likely
 
 It seems there were a lot of the same sequences matching to the various mcr clades. 
 
-b. Filter
 #######
+b. Filter
+###############################################################################
 
 The initial sequence search does not have great options to filter the matches that are returned. As such, it usually returns many spurious matches. Additionally, we do not need to keep sequences that are 100% identical to our curated sequences as this does not add any new information for the ROCker model.
 
@@ -88,8 +119,9 @@ Number of entries passing the filters: 37328
 Number of duplicate blast matches passing filter to remove: 33553
 Number of best hit entries written to new file: 3775 
 
-c. ClusterReps
 #######
+c. ClusterReps
+###############################################################################
 
 Since we still have a lot of sequences lets dereplicate the set some.
 
@@ -101,8 +133,9 @@ mmseqs clustering at 90% amino acid sequence similarity
 
 Representative sequences retained: 1110
 
-d. Align
 #######
+d. Align
+###############################################################################
 
 sequence alignment with clustal omega
 
@@ -114,8 +147,9 @@ For this I am first building an alignment with the 10 curated sequences and then
 > grep -c '>' 02_mmseqs_reps.fasta.aln
 Sequences before trimming: 1120 (1110 searched + 10 curated)
 
-e. trim
 #######
+e. trim
+###############################################################################
 
 trim the alignment with trimmal
 
@@ -134,8 +168,9 @@ clean up sequence names for the tree.
 
 > python ../00c_Scripts/02e_clean_seq_names.py -i 02a_tree_prep/03_trimmed.fasta.aln
 
-f. tree
 #######
+f. tree
+###############################################################################
 
 Build phylogenetic tree with RAxML
 
@@ -148,8 +183,9 @@ Build phylogenetic tree with RAxML
 # Fasttree - approximate maximum likelihood tree
 > qsub -v input=02a_tree_prep/03_trimmed.fasta.aln,output=04c_FastTree.nwk,n=mcr ../00b_PBS/02f_FastTree.pbs 
 
-g. annotated.tsv
 #######
+g. annotated.tsv
+###############################################################################
 
 create annotated tsv file to explore clades.
 
@@ -172,25 +208,11 @@ To further inform our decisions from the tree, we want to know which species and
 # Fasttree
 > python ../00c_Scripts/02g_Tree_Distance_Cluster.py -i 04c_FastTree.nwk -o 05c_Clade_info_fasttree/05c_Clade_info_fasttree -f 02a_tree_prep/04_MCR_sequence_set.fasta
 
-h. Create annotated phylogenetic tree PDF
 #######
+h. Create annotated phylogenetic tree PDF
+###############################################################################
 
-from local: /Users/rothconrad/OneDrive - Georgia Institute of Technology/00_ROCker/03_mcr_colistin/02_ROCin-mcr
-
-> python ../../02i_Plot_Annotated_Tree_v2.py -a 05b_Clade_info_bootstrap/05b_Clade_info_annotated.tsv -n 04b_RAxML-Bootstrap/RAxML_bestTree.MCL_bootstrap.RAxML -o MCR_RAxML_Bootstrap_annotated_tree.pdf
-
-# looks like too many clusters reduce to 20 clusters.
-> python ../../00d_Scripts/02g_Tree_Distance_Cluster.py -i 04b_RAxML-Bootstrap/RAxML_bestTree.MCL_bootstrap.RAxML -o annotated_clusters_n20 -n 20 -f 02a_tree_prep/04_MCR_sequence_set.fasta
-
-on pace:
-> mkdir 05d_Clade_info_bootstrap_n20/
-> python ../00c_Scripts/02g_Tree_Distance_Cluster.py -i 04b_RAxML-Bootstrap/RAxML_bestTree.MCL_bootstrap.RAxML -o 05d_Clade_info_bootstrap_n20/05d_Clade_info -f 02a_tree_prep/04_MCR_sequence_set.fasta -n 20
-
-> python ../../02i_Plot_Annotated_Tree_v2.py -a 05d_Clade_info_bootstrap_n20/05d_Clade_info_annotated.tsv -n 04b_RAxML-Bootstrap/RAxML_bestTree.MCL_bootstrap.RAxML -o MCR_RAxML_Bootstrap_annotated_tree_n20.pdf 
-
-### Let's start playing with hdbscan params
-
-LOCAL: /Users/rothconrad/OneDrive - Georgia Institute of Technology/00_ROCker/03_mcr_colistin/02_ROCin-mcr
+from LOCAL: /Users/rothconrad/OneDrive - Georgia Institute of Technology/00_ROCker/03_mcr_colistin/02_ROCin-mcr
 
 # cluster test 01:
 	min_cluster_size= 5% of total sequences in tree
@@ -206,37 +228,39 @@ LOCAL: /Users/rothconrad/OneDrive - Georgia Institute of Technology/00_ROCker/03
 # plot tree
 > python ../../00d_Scripts/02i_Plot_Annotated_Tree_v2.py -n 05e_Clade_info_bootstrap_hdb-01/RAxML_bestTree.MCL_bootstrap.RAxML -a 05e_Clade_info_bootstrap_hdb-01/test02_annotated.tsv -o TREE_test01.pdf
 
-
+###############################################################################
 #######
 Step 03: Build ROCker Models
 #################################
+###############################################################################
 
 Collect accession numbers for each cluster from 05b_Clade_info_bootstrap_annotated.tsv and create positive and negative text files for each Clade/Cluster to build a ROCker model for. I used Excel and a text editor at this step to create these files. Single column text files from the "Gene_Name" column of the annotated.tsv file. The Gene_Name is the Uniprot accession ID. Remove the REFERENCE SEQUENCEs from these files as they come with NCBI acession numbers and will not be foun in UniProt.
 
 Collect a pos and neg .txt file for each model within a separate directory for each model and upload to PACE cluster.
 
-from: /storage/scratch1/9/rconrad6/ROCkOut/03_mph
+###############################################################################
+#### MCR 1,2 & 6 clade (cluster 2) POSITIVE.
+#### All else NEGATIVE
+from PACE: /storage/scratch1/9/rconrad6/ROCkOut/02_mcr/Update_1
 
-> cd Model_1
-> qsub -v P=Model_1_pos.txt,N=Model_1_neg.txt,O=Model_1,n=Model_1 ../../00b_PBS/01_ROCkOut.pbs
-> cd ..
+# Download the files
+> python ../../ROCkOut/rockout_main.py download -d model -p TREE_test01_pos.txt -n TREE_test01_neg.txt -t 5
 
-> cd Model_2
-> qsub -v P=Model_2_pos.txt,N=Model_2_neg.txt,O=Model_2,n=Model_2 ../../00b_PBS/01_ROCkOut.pbs
-> cd ..
+# Build the model
+> sbatch --export dir=model ../../00b_sbatch/rocker_build.sbatch
 
-> cd Model_3
-> qsub -v P=Model_3_pos.txt,N=Model_3_neg.txt,O=Model_3,n=Model_3 ../../00b_PBS/01_ROCkOut.pbs
-> cd ..
+###############################################################################
+#### MCR 1,2 & 6 clade (cluster 2) POSITIVE.
+#### Cluster 15, 3, 14, and surrounding -1's NEGATIVE.
+from PACE: /storage/scratch1/9/rconrad6/ROCkOut/02_mcr/Update_1b
 
-> cd Model_4
-> qsub -v P=Model_4_pos.txt,N=Model_4_neg.txt,O=Model_4,n=Model_4 ../../00b_PBS/01_ROCkOut.pbs
-> cd ..
+# Download the files
+> python ../../ROCkOut/rockout_main.py download -d model -p TREE_test01_pos.txt -n TREE_test01_neg.txt -t 5
 
-> cd Model_5
-> qsub -v P=Model_5_pos.txt,N=Model_5_neg.txt,O=Model_5,n=Model_5 ../../00b_PBS/01_ROCkOut.pbs
-> cd ..
+# Build the model
+> python ../../ROCkOut/rockout_main.py build -d model -t 5
 
+###############################################################################
 # Download complete directories for each model to local
 # from: /Users/rothconrad/OneDrive - Georgia Institute of Technology/00_ROCker/04_mphA/04_ROCker_Models
 
@@ -248,20 +272,3 @@ from: /storage/scratch1/9/rconrad6/ROCkOut/03_mph
 > python ../../../ROCkOut/rocker_dash.py
 
 
-#######
-Scratch
-#################################
-
-ValueError: Buffer dtype mismatch, expected 'double_t' but got 'long'
-
-python ../00c_Scripts/00c_ebi_dbfetch.py fetchData tr:A0A2P5GGK6_9ENTR fasta > MCR-9.1_Escherichia_coli.ids.A0A2P5GGK6_9ENTR.fasta
-
-
-dbfetch='/storage/home/hcoda1/9/rconrad6/p-ktk3-0/02_ROCker/00c_Scripts/00c_ebi_dbfetch.py'
-
-while read p; do name=`echo $p | cut -d: -f2`; python ${dbfetch} fetchData $p fasta > 01_fasta/MCR1-${name}.fasta; echo ${name}; done < MCR-1.1_Gammaproteobacteria.ids.txt
-
-
-ebi_blast='/storage/home/hcoda1/9/rconrad6/p-ktk3-0/02_ROCker/00c_Scripts//00b_ebi_ncbiblast.py'
-
-python ${ebi_blast} --email rotheconrad@gatech.edu --program blastp --stype protein --sequence  --database uniprotkb --multifasta --useSeqId --maxJobs 30 --pollFreq 60 --outformat ids,out --exp 10 --alignments 1000
