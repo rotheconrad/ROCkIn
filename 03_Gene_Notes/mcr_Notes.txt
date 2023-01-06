@@ -243,32 +243,29 @@ Collect a pos and neg .txt file for each model within a separate directory for e
 #### All else NEGATIVE
 from PACE: /storage/scratch1/9/rconrad6/ROCkOut/02_mcr/Update_1
 
-# Download the files
-> python ../../ROCkOut/rockout_main.py download -d model -p TREE_test01_pos.txt -n TREE_test01_neg.txt -t 5
-
-# Build the model
-> sbatch --export dir=model ../../00b_sbatch/rocker_build.sbatch
+# Download the files and build the model
+> sbatch --export dir=model,pos=pos.txt,neg=neg.txt ../../00b_sbatch/rocker_build.sbatch
 
 ###############################################################################
 #### MCR 1,2 & 6 clade (cluster 2) POSITIVE.
 #### Cluster 15, 3, 14, and surrounding -1's NEGATIVE.
 from PACE: /storage/scratch1/9/rconrad6/ROCkOut/02_mcr/Update_1b
 
-# Download the files
-> python ../../ROCkOut/rockout_main.py download -d model -p TREE_test01_pos.txt -n TREE_test01_neg.txt -t 5
+# Download the files and build the model
+> sbatch --export dir=model,pos=pos.txt,neg=neg.txt ../../00b_sbatch/rocker_build.sbatch
 
-# Build the model
-> python ../../ROCkOut/rockout_main.py build -d model -t 5
+# Plot the figures
+> python ../../ROCkOut/rockout_main.py refine-ni -d model
 
 ###############################################################################
+# For interactive refine mode
 # Download complete directories for each model to local
-# from: /Users/rothconrad/OneDrive - Georgia Institute of Technology/00_ROCker/04_mphA/04_ROCker_Models
+# and the git repo and create a local conda environment
 
 # Load conda environment
 > conda activate ROCkOut
 
-# cd into model directory and run rocker_dash.py
-> cd Model_1
-> python ../../../ROCkOut/rocker_dash.py
+# cd into model directory
+> python /PATH/TO/GIT/REPO/ROCkOut/rocker_main.py refine -d MODEL_DIRECTORY
 
 
