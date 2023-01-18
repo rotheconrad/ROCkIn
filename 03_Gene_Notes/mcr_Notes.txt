@@ -184,7 +184,7 @@ Build phylogenetic tree with RAxML
 > qsub -v input=02a_tree_prep/03_trimmed.fasta.aln,output=04c_FastTree.nwk,n=mcr ../00b_PBS/02f_FastTree.pbs 
 
 #######
-g. annotated.tsv
+g. Create annotated tsv and phylogenetic tree PDF
 ###############################################################################
 
 create annotated tsv file to explore clades.
@@ -195,22 +195,7 @@ To further inform our decisions from the tree, we want to know which species and
 > cat 00b_curated_seqs/ncbi_refgenes_mcr_renamed_reduced.fasta 02a_tree_prep/02_mmseqs_reps.fasta >> 02a_tree_prep/04_MCR_sequence_set.fasta
 
 # setup directory
-> mkdir 05a_Clade_info_distance 05b_Clade_info_bootstrap 05c_Clade_info_fasttree
-
-# convert nwk to distance matrix, cluster the matrix and add annotations
-
-# RAxML Distance
-> python ../00c_Scripts/02g_Tree_Distance_Cluster.py -i 04a_RAxML-Distance/RAxML_parsimonyTree.MCL_distance.RAxML -o 05a_Clade_info_distance/05a_Clade_info_distance -f 02a_tree_prep/04_MCR_sequence_set.fasta
-
-# RAxML Bootstrap
-> python ../00c_Scripts/02g_Tree_Distance_Cluster.py -i 04b_RAxML-Bootstrap/RAxML_bestTree.MCL_bootstrap.RAxML -o 05b_Clade_info_bootstrap/05b_Clade_info -f 02a_tree_prep/04_MCR_sequence_set.fasta
-
-# Fasttree
-> python ../00c_Scripts/02g_Tree_Distance_Cluster.py -i 04c_FastTree.nwk -o 05c_Clade_info_fasttree/05c_Clade_info_fasttree -f 02a_tree_prep/04_MCR_sequence_set.fasta
-
-#######
-h. Create annotated phylogenetic tree PDF
-###############################################################################
+> mkdir 05b_Clade_info_bootstrap 05c_Clade_info_fasttree
 
 from LOCAL: /Users/rothconrad/OneDrive - Georgia Institute of Technology/00_ROCker/03_mcr_colistin/02_ROCin-mcr
 
@@ -227,6 +212,8 @@ from LOCAL: /Users/rothconrad/OneDrive - Georgia Institute of Technology/00_ROCk
 
 # plot tree
 > python ../../00d_Scripts/02i_Plot_Annotated_Tree_v2.py -n 05e_Clade_info_bootstrap_hdb-01/RAxML_bestTree.MCL_bootstrap.RAxML -a 05e_Clade_info_bootstrap_hdb-01/test02_annotated.tsv -o TREE_test01.pdf
+
+Download the tree and tsv. Review to make positive and negative UniProt ID selections to give to ROCkOut.
 
 ###############################################################################
 #######

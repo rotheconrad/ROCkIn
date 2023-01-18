@@ -33,9 +33,11 @@ To use the provided PBS or Sbatch scripts replace "PATH/to/GitHub/repo" with the
 - [numpy](https://numpy.org/)
 - [matplotlib](https://matplotlib.org/)
 - [seaborn](https://seaborn.pydata.org/)
+- [scipy](https://scipy.org/)
 - [sklearn](https://scikit-learn.org/stable/)
 - [Bio](https://biopython.org/)
 - [hdbscan](https://hdbscan.readthedocs.io/)
+- [pycircos](https://github.com/ponnhide/pyCircos)
 
 #### References
 
@@ -44,11 +46,12 @@ To use the provided PBS or Sbatch scripts replace "PATH/to/GitHub/repo" with the
 1. Harris CR, Millman KJ, van der Walt SJ, Gommers R, Virtanen P, Cournapeau D, et al. Array programming with NumPy. Nature. 2020;585:357–62.
 1. Hunter JD. Matplotlib: A 2D graphics environment. Computing in science & engineering. 2007;9(3):90–5.
 1. Waskom ML. Seaborn: statistical data visualization. Journal of Open Source Software. 2021 Apr 6;6(60):3021.
+1. Pauli Virtanen, et. al. (2020) SciPy 1.0: Fundamental Algorithms for Scientific Computing in Python. Nature Methods, 17(3), 261-272.
 1. Scikit-learn: Machine Learning in Python, Pedregosa et al., JMLR 12, pp. 2825-2830, 2011.
 1. Cock PA, Antao T, Chang JT, Chapman BA, Cox CJ, Dalke A, Friedberg I, Hamelryck T, Kauff F, Wilczynski B and de Hoon MJL (2009) Biopython: freely available Python tools for computational molecular biology and bioinformatics. Bioinformatics, 25, 1422-1423
 1. L. McInnes, J. Healy, S. Astels, hdbscan: Hierarchical density based clustering In: Journal of Open Source Software, The Open Journal, volume 2, number 11. 2017
 
- *Python, it's packages, and all program above can be installed with [Conda](https://docs.conda.io/en/latest/miniconda.html).*
+ *Python, it's packages, and all program above can be installed with [Conda](https://docs.conda.io/en/latest/miniconda.html) except for pycircos needs to use "pip install python-circos".*
 
 
 # PART 00: Curate reference sequences
@@ -347,6 +350,8 @@ mkdir 02c_Annoted_Tree
 scripts=/Path/to/GitHub/repo/02_Python
 
 # convert nwk to distance matrix, cluster the matrix and add annotations
+
+### 02g_Tree_Distance_Cluster.py can take a while (several hours) - especially for larger trees.
 
 # For RAxML Bootstrap
 python ${scripts}/02g_Tree_Distance_Cluster.py -i 02a_tree_prep/Tree_Bootstrap_bestTree.MCL_bootstrap.RAxML -f 02a_tree_prep/final_sequence_set.fasta -o 02c_Annoted_Tree/Cluster_annotations

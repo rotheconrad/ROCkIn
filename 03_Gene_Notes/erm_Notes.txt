@@ -1,4 +1,4 @@
-ROCin notes for erm(B) gene.
+ROCkIn notes for erm(B) gene.
 
 #######
 Step 00: Curate sequences
@@ -16,7 +16,7 @@ and some are numbered between 30 and 50 ie erm(42).
 Search for erm genes at ncbi refgene database returned 94 results
 https://www.ncbi.nlm.nih.gov/pathogens/refgene/#erm
 
-Download fasta sequences and rename files.
+Download fasta sequences, rename files and rename fasta sequence deflines.
 
 b. Explore sequence diversity
 
@@ -74,6 +74,7 @@ Step 02: Deduplicate, Filter, ClusterReps, align, trim, tree -> annotated.tsv
 #################################
 
 a. Deduplicate
+###############################################################################
 
 Since we have multiple verified sequences that we searched to UniProt, we likely have found overlapping search results. Concatenate fasta files of all search result sequences and deduplicate by UniProt ID. I wrote a Python script to deduplicate the concatenated fasta
 
@@ -84,6 +85,7 @@ Since we have multiple verified sequences that we searched to UniProt, we likely
 		Unique sequences retained: 5779
 
 b. Filter
+###############################################################################
 
 The initial sequence search does not have great options to filter the matches that are returned. As such, it usually returns many spurious matches. Additionally, we do not need to keep sequences that are 100% identical to our curated sequences as this does not add any new information for the ROCker model.
 
@@ -109,6 +111,7 @@ Number of duplicate blast matches passing filter to remove: 38798
 Number of best hit entries written to new file: 5739 
 
 c. ClusterReps
+###############################################################################
 
 Since we still have a lot of sequences lets dereplicate the set some.
 
@@ -121,6 +124,7 @@ mmseqs clustering at 90% amino acid sequence similarity
 Representative sequences retained: 2458
 
 d. Align
+###############################################################################
 
 sequence alignment with clustal omega
 
@@ -134,6 +138,7 @@ For this I am first building an alignment with the 10 curated sequences and then
 Sequences before trimming: 2513 (2458 searched + 55 curated)
 
 e. trim
+###############################################################################
 
 trim the alignment with trimmal
 
@@ -153,6 +158,7 @@ clean up sequence names for the tree.
 > python ../00c_Scripts/02e_clean_seq_names.py -i 02a_tree_prep/03_trimmed.fasta.aln
 
 f. tree
+###############################################################################
 
 Build phylogenetic tree with RAxML
 
@@ -165,66 +171,70 @@ Build phylogenetic tree with RAxML
 # Fasttree - approximate maximum likelihood tree
 > qsub -v input=02a_tree_prep/03_trimmed.fasta.aln,output=04c_erm_FastTree.nwk,n=erm ../00b_PBS/02f_FastTree.pbs 
 
+
 g. annotated.tsv
+###############################################################################
 
 create annotated tsv file to explore clades.
 
+from: /storage/home/hcoda1/9/rconrad6/p-ktk3-0/02_ROCker/05_erm
+
 To further inform our decisions from the tree, we want to know which species and functional annotations are in each clade. To do this I wrote python code that uses the branch distance from the tree to create a distance matrix which is used in clustering algorithms. It gets clades from the the tree as clusters and creates a tsv file with species and annotation information for each sequence.
 
+We need the RAxML-Bootstrap tree from: /storage/home/hcoda1/9/rconrad6/p-ktk3-0/02_ROCker/05_erm/04b_RAxML-Bootstrap
+
+We also need the fasta formatted sequences:
 # concatenate the curated sequences and the dereplicated filtered searched sequences
 > cat 00b_curated_seqs/NCBI_refgene_erm_select.faa 02a_tree_prep/02_mmseqs_reps.fasta >> 02a_tree_prep/04_erm_sequence_set.fasta
 
 # convert nwk to distance matrix, cluster the matrix and add annotations
 
-# Fasttree
-> python ../00c_Scripts/02g_Tree_Distance_Cluster.py -i 04c_erm_FastTree.nwk -o 05c_Clade_info_fasttree/05c_Clade_info_fasttree -f 02a_tree_prep/04_erm_sequence_set.fasta
-
 # RAxML Bootstrap
-> python ../00c_Scripts/02g_Tree_Distance_Cluster.py -i 04b_RAxML-Bootstrap/RAxML_bestTree.erm_bootstrap.RAxML -o 05b_Clade_info_bootstrap/05b_Clade_info_RAxML_Bootstrap -f 02a_tree_prep/04_erm_sequence_set.fasta 
+> mkdir 05a_Clade_info
+> python ../00c_Scripts/02g_Tree_Distance_Cluster.py -i 04b_RAxML-Bootstrap/RAxML_bestTree.erm_bootstrap.RAxML -f 02a_tree_prep/04_erm_sequence_set.fasta -o 05a_Clade_info/05a
 
-# RAxML Distance does not work for the tree distance clustering
+*** Ran into new conda error on pace with HDBSCAN and cachedir ***
+*** found quick solution to replace cacherdir with location in the python code ***
+*** apparently a joblib update from 1.1.0 to 1.2.0 broke this. ***
+*** https://github.com/scikit-learn-contrib/hdbscan/issues/565 ***
+
+# plot tree
+> python ../00c_Scripts/02i_Plot_Annotated_Tree_v2.py -a 05a_Clade_info/05a_annotated.tsv -n 04b_RAxML-Bootstrap/RAxML_bestTree.erm_bootstrap.RAxML -o 05a_Clade_info/Clade_Tree_erm.pdf
+
+Download the tree and tsv. Review to make positive and negative UniProt ID selections to give to ROCkOut.
 
 #######
 Step 03: Build ROCker Models
 #################################
 
-Collect accession numbers for each cluster from 05b_Clade_info_bootstrap_annotated.tsv and create positive and negative text files for each Clade/Cluster to build a ROCker model for. I used Excel and a text editor at this step to create these files. Single column text files from the "Gene_Name" column of the annotated.tsv file. The Gene_Name is the Uniprot accession ID. Remove the REFERENCE SEQUENCEs from these files as they come with NCBI acession numbers and will not be foun in UniProt.
+Collect accession numbers for each cluster from ROCkIn annotated tsv using the labelled phylogenetic tree as reference and create positive and negative text files for each Clade/Cluster to build a ROCker model for. I used Excel and a text editor at this step to create these files. Single column text files from the "Gene_Name" column of the annotated.tsv file. The Gene_Name is the Uniprot accession ID. Remove the REFERENCE SEQUENCEs from these files as they come with NCBI acession numbers and will not be found in UniProt.
 
 Collect a pos and neg .txt file for each model within a separate directory for each model and upload to PACE cluster.
 
-from: /storage/scratch1/9/rconrad6/ROCkOut/04_erm
+# load the conda environment for ROCkOut before the sbatch script or manual steps.
+# depending on your compute cluster you may have to activate the conda environment inside the sbatch script
 
-> cd Model_1
-> qsub -v P=Model_1_pos.txt,N=Model_1_neg.txt,O=Model_1,n=Model_1 ../../00b_PBS/01_ROCkOut.pbs
-> cd ..
+# I created an alias to conda activate my rocker environment
+> rockout
 
-> cd Model_2
-> qsub -v P=Model_2_pos.txt,N=Model_2_neg.txt,O=Model_2,n=Model_2 ../../00b_PBS/01_ROCkOut.pbs
-> cd ..
+# Download, Build and plot the model in step.
+> sbatch --export dir=model,pos=pos.txt,neg=neg.txt ../../00b_sbatch/ROCkOut.sbatch
 
-> cd Model_3
-> qsub -v P=Model_3_pos.txt,N=Model_3_neg.txt,O=Model_3,n=Model_3 ../../00b_PBS/01_ROCkOut.pbs
-> cd ..
+# the sbatch script includes the following steps if you want to do it manually
+# Replace ${dir} with your project directory.
+# It is a new directory created during the download step.
+# Call it whatever you want.
 
-> cd Model_4
-> qsub -v P=Model_4_pos.txt,N=Model_4_neg.txt,O=Model_4,n=Model_4 ../../00b_PBS/01_ROCkOut.pbs
-> cd ..
+> rockout='/path/to/ROCkOut/git/repo/rockout_main.py'
 
-> cd Model_5
-> qsub -v P=Model_5_pos.txt,N=Model_5_neg.txt,O=Model_5,n=Model_5 ../../00b_PBS/01_ROCkOut.pbs
-> cd ..
+# Download the data
+> python ${rockout} download -d ${dir} -p ${pos} -n ${neg} -t 10
 
-# Download complete directories for each model to local
-# from: /Users/rothconrad/OneDrive - Georgia Institute of Technology/00_ROCker/04_mphA/04_ROCker_Models
+# Build the model
+> python ${rockout} build -d ${dir} -t 10
 
-# Load conda environment
-> conda activate ROCkOut
-
-# cd into model directory and run rocker_dash.py
-> cd Model_1
-> python ../../../ROCkOut/rocker_dash.py
-
-
+# Generate the plots
+> python ${rockout} refine-ni -d ${dir}
 
 
 

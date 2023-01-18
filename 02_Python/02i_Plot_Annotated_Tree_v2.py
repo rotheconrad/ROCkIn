@@ -243,7 +243,7 @@ def main():
         )
     parser.add_argument(
         '-c1', '--cluster_colors_file',
-        help='Please specify the clusters color file!',
+        help='(OPTIONAL) Please specify the clusters color file!',
         metavar=':',
         type=str,
         required=False,
