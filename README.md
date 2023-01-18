@@ -268,6 +268,8 @@ Before building a phylogenetic tree, MSAs should be cleaned to removed spurious 
 
 TrimAl sometimes removes reference sequences or does other strange things. Please check the mmseqs_reps.fasta.aln file before TrimAl and the trimmed TrimAl output before proceeding. It is quite common for step 4 and 5 to require manual work to achieve a good alignment file. A good alignment file is necessary to get a reliable tree for step 6, 7, & 8.
 
+Sometimes you may want to consider going back to step 2 and increasing the filtering parameters or to step 3 and cluster at 85 or 95 instead of 90 with mmseqs.
+
 We're using the following two parameters for TrimAl ([User Guide](http://trimal.cgenomics.org/)):
     - resoverlap: Minimum overlap of a positions with other positions in the column to be considered a "good position". Range: [0 - 1].
     - seqoverlap: Minimum percentage of "good positions" that a sequence must have in order to be conserved. Range: [0 - 100].
