@@ -218,7 +218,7 @@ Collect a pos and neg .txt file for each model within a separate directory for e
 > rockout
 
 # Download, Build and plot the model in step.
-> sbatch --export dir=model,pos=pos.txt,neg=neg.txt ../../00b_sbatch/ROCkOut.sbatch
+> sbatch --export dir=model/,pos=pos.txt,neg=neg.txt ../../00b_sbatch/ROCkOut.sbatch
 
 # the sbatch script includes the following steps if you want to do it manually
 # Replace ${dir} with your project directory.

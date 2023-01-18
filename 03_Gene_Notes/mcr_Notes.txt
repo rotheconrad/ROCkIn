@@ -239,7 +239,7 @@ from PACE: /storage/scratch1/9/rconrad6/ROCkOut/02_mcr/Update_1
 from PACE: /storage/scratch1/9/rconrad6/ROCkOut/02_mcr/Update_1b
 
 # Download the files and build the model
-> sbatch --export dir=model,pos=pos.txt,neg=neg.txt ../../00b_sbatch/rocker_build.sbatch
+> sbatch --export dir=model/,pos=pos.txt,neg=neg.txt ../../00b_sbatch/rocker_build.sbatch
 
 # Plot the figures
 > python ../../ROCkOut/rockout_main.py refine-ni -d model
