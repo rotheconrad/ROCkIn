@@ -8,13 +8,23 @@ Step 00: Curate sequences
 #################################
 ###############################################################################
 
+mcr: mobile colistin resistance.
+
+colistin (aka polymixin) resistance involves an L-Ara4N, 2-aminoethanol, or PEtN modification of lipid A. Several bacterial species have this ability as a response to certain external stimuli. Several spontaneous mutations have been documented that result in the same lipid A modification.
+
+mcr genes enocde an LPS-modifying enzyme and are mobilized on a variety of plasmids. mcr-1 is primarily mobilized by an ISApl1 composite (IS30 family) transposon. The mcr-1 gene confers colistin resistance by encoding a phosphoethanolamine transferase that catalyzes the addition of a phosphoethanolamine moiety to lipid A in the bacterial outer membrane. MCR-1 confers resistance by modifying the colistin target, catalyzing transfer of phosphoethanolamine (PEA) onto the glucosamine saccharide of lipid A in the bacterial outer membrane. This reduces the net negative charge of the lipid A head group and, consequently, colistin binding.
+
+
 a. Find and retrieve sequences
 
-There are 10 classes of mcr genes with multiple squence variants per class.
-They are designated as mcr 1.1, mcr 1.2, mcr 2.1, mcr 2.2, and etc.
+There are 10 classes of mcr genes (mcr-1 thru mcr-10) with multiple squence variants
+per class. They are designated as mcr 1.1, mcr 1.2, mcr 2.1, mcr 2.2, and etc.
 
 Search for mcr genes at ncbi refgene database returned 103 results
 https://www.ncbi.nlm.nih.gov/pathogens/refgene/#mcr
+
+
+I retrieved uniprot sequence for eptA from Ecoli (P30845 · EPTA_ECOLI) and Salmonella typhimurium (P36555 · EPTA_SALTY) as well since the mcr's appear to come from eptA. based on literature and based on a first round of uniprot blast searches with the ncbi mcr refgenes.
 
 Download fasta sequences and rename files. These are referred to as the curated or reference sequences (RefSeqs.faa)
 
@@ -31,7 +41,10 @@ Use EBI Clustalo https://www.ebi.ac.uk/Tools/msa/clustalo/
 - Select result summary tab.
 - Download the *.pim file (PIM) for the percent identity matrix.
 
-> python 00a_PIM_clustered_heatmap.py -i PIM -o RefSeqs.faa.dst.pdf
+From local directory:
+/Users/rothconrad/OneDrive - Georgia Institute of Technology/00_ROCker/03_mcr_colistin/02_mcr_ROCkIn/00_PreROCk
+
+> python ../../../ROCkIn/02_Python/00a_PIM_clustered_heatmap.py -i RefSeqs.fasta.aln.pim -o RefSeqs.pim.pdf
 
 ###############################################################################
 #######
@@ -45,31 +58,40 @@ This is to look for extended sequence diversity.
 I selected 1 representative sequence from each of 10 mcr clades.
 Sequences within clades are highly similar and won't benefit the search.
 
-I named this file: ncbi_refgenes_mcr_renamed_reduced.fasta and placed it
-in the 00_curatated seqs folder.
+I named this file: RefSeqs_reduced.fasta
 
-I use a script from EBI webservices to do this search in a terminal.
+Upload RefSeqs to PACE.
+working directory: /storage/scratch1/9/rconrad6/ROCkIn/02_Mcr
 
-I wrapped it in a pbs job to run on PACE.
+# setup directories
+> mkdir 00a_log 00b_refseqs 01a_ebi_blast 01b_ebi_dat 01c_ebi_fasta
 
-from: /storage/home/hcoda1/9/rconrad6/p-ktk3-0/02_ROCker/03a_mcr
+a. search uniprot database
+# this returns UniProt IDs for blast sequence matches
 
 # This returns UniProt IDs for sequence matches
-> qsub -v fasta=00b_curated_seqs/ncbi_refgenes_mcr_renamed_reduced.fasta ../00b_PBS/01a_ebi_blast.pbs
+> sbatch --export fasta=00b_refseqs/RefSeqs_reduced.fasta ../ROCkIn/01b_Sbatch/01a_ebi_blast.sbatch
 
-# file house keeping
-> mkdir 01a_ebi_blast_ids 01b_ebi_dat 01c_ebi_fasta
-> mv *ids.txt 01a_ebi_blast_ids
+# move files into folder to keep clean organization
+> mv *.txt 01a_ebi_blast/
 
-# Download the *.dat files from EBI with dbfetch
-> for f in 01a_ebi_blast_ids/*; do odir='01b_ebi_dat'; gene=`basename $f | cut -d. -f1`; echo $gene; if [ ! -d ${odir}/${gene} ]; then mkdir ${odir}/${gene}; fi; qsub -v input=${f},odir=${odir},gene=${gene} ../00b_PBS/01b_ebi_dbfetch.pbs; done
+b. retrieve fasta files for matches
+# first download the *.dat file from EBI for each sequence match with dbfetch
 
-# Parse the .dat file into a fasta file
+> for f in 01a_ebi_blast/*; do odir='01b_ebi_dat'; gene=`basename $f | cut -d. -f1`; echo $gene; if [ ! -d ${odir}/${gene} ]; then mkdir ${odir}/${gene}; fi; sbatch -o 00a_log/00b_${gene}_dbfetch.out -e 00a_log/00b_${gene}_dbfetch.err --export input=${f},odir=${odir},gene=${gene} ../ROCkIn/01b_Sbatch/01b_ebi_dbfetch.sbatch; done
+
+# parse the .dat file to get the sequence in fasta format
 # place relevant info in the sequence deflines we will use downstream
-> for d in 01b_ebi_dat/*; do n=`basename $d`; echo $n; python ../00c_Scripts/01d_parse_dat_file.py -i $d -o 01c_ebi_fasta/${n}.fasta; done
 
-# concatenate to single fasta file
-> cat 01c_ebi_fasta/MCR-* >> 01c_ebi_fasta/00_MCR_all_ebi_matches.fa
+> for d in 01b_ebi_dat/*; do n=`basename $d`; echo $n; python ../ROCkIn/02_Python/01d_parse_dat_file.py -i $d -o 01c_ebi_fasta/${n}.fasta; done
+
+# concatenate gene fastas into single fasta file
+> cat 01c_ebi_fasta/*.fasta >> 01c_ebi_fasta/00_mcr_all_ebi_matches.fa
+
+# count 'em
+> grep -c '>' 01c_ebi_fasta/00_mcr_all_ebi_matches.fa 
+
+12,000 fasta sequences returned from blast search
 
 ###############################################################################
 #######
@@ -86,11 +108,11 @@ a. Deduplicate
 
 Since we have multiple verified sequences that we searched to UniProt, we likely have found overlapping search results. Concatenate fasta files of all search result sequences and deduplicate by UniProt ID. I wrote a Python script to deduplicate the concatenated fasta
 
-> python ../00c_Scripts/02a_Remove_Duplicate_Fasta_Entries.py -f 01c_ebi_fasta/00_MCR_all_ebi_matches.fa -o 02a_tree_prep/00_MCR_dedup_ebi.fa
+> python ../ROCkIn/02_Python/02a_Remove_Duplicate_Fasta_Entries.py -f 01c_ebi_fasta/00_mcr_all_ebi_matches.fa -o 02a_tree_prep/00_mcr_dedup_ebi.fa
 
-		Total sequences in file: 10000
-		Duplicates Removed: 6225
-		Unique sequences retained: 3775
+		Total sequences in file: 12000
+		Duplicates Removed: 7569
+		Unique sequences retained: 4431
 
 It seems there were a lot of the same sequences matching to the various mcr clades. 
 
@@ -111,13 +133,17 @@ It also plots histograms of each parameter post filtering and can be rerun with 
 
 I wrapped it into a pbs script.
 
-> qsub -v ref=00b_curated_seqs/ncbi_refgenes_mcr_renamed_reduced.fasta,qry=02a_tree_prep/00_MCR_dedup_ebi.fa,out=02a_tree_prep/01_MCR_fltr_ebi,name=mcrA ../00b_PBS/02b_Blastp.pbs
+> sbatch --export ref=00b_refseqs/RefSeqs_reduced.fasta,qry=02a_tree_prep/00_mcr_dedup_ebi.fa,out=02a_tree_prep/01_mcr_fltr_ebi ../ROCkIn/01b_Sbatch/02b_Blastp.sbatch 
 
-Total number of entries in blast file: 38581
-Number of entries failing the filters: 1253
-Number of entries passing the filters: 37328
-Number of duplicate blast matches passing filter to remove: 33553
-Number of best hit entries written to new file: 3775 
+> cat 00a_log/02b_BlastP.out
+
+Total number of entries in blast file: 44950
+Number of entries failing the filters: 1736
+Number of entries passing the filters: 43214
+Number of duplicate blast matches passing filter to remove: 38786
+Number of best hit entries written to new file: 4428 
+
+4431 to 4428 sequences. Looks like our matches were pretty good.
 
 #######
 c. ClusterReps
@@ -127,11 +153,11 @@ Since we still have a lot of sequences lets dereplicate the set some.
 
 mmseqs clustering at 90% amino acid sequence similarity
 
-> qsub -v infile=02a_tree_prep/01_MCR_fltr_ebi_blast_fltrd.fasta,odir=02a_tree_prep,n=mcr ../00b_PBS/02c_mmseqs.pbs
+> sbatch --export infile=02a_tree_prep/01_mcr_fltr_ebi_blast_fltrd.fasta,odir=02a_tree_prep, ../ROCkIn/01b_Sbatch/02c_mmseqs.sbatch
 
 > grep -c '>' 02a_tree_prep/02_mmseqs_reps.fasta
 
-Representative sequences retained: 1110
+Representative sequences retained: 1154
 
 #######
 d. Align
@@ -141,11 +167,11 @@ sequence alignment with clustal omega
 
 For this I am first building an alignment with the 10 curated sequences and then fitting the searched sequences to that alignment. This runs clustal omega twice.
 
-> qsub -v verified=00b_curated_seqs/ncbi_refgenes_mcr_renamed_reduced.fasta,newseqs=02a_tree_prep/02_mmseqs_reps.fasta,n=mcr ../00b_PBS/02d_seq_alignment.pbs
+> sbatch --export verified=00b_refseqs/RefSeqs_reduced.fasta,newseqs=02a_tree_prep/02_mmseqs_reps.fasta ../ROCkIn/01b_Sbatch/02d_seq_alignment.sbatch
 
 # sequences before trimming
-> grep -c '>' 02_mmseqs_reps.fasta.aln
-Sequences before trimming: 1120 (1110 searched + 10 curated)
+> grep -c '>' 02a_tree_prep/02_mmseqs_reps.fasta.aln
+Sequences before trimming: 1166 (1154 searched + 12 curated)
 
 #######
 e. trim
@@ -157,16 +183,17 @@ Before building a phylogenetic tree, MSAs should be cleaned to removed spurious 
 
 I'm using trimmal for this
 
-> qsub -v input=02a_tree_prep/02_mmseqs_reps.fasta.aln,output=02a_tree_prep/03_trimmed.fasta.aln,n=mcr ../00b_PBS/02e_seq_trim.pbs
+> sbatch --export input=02a_tree_prep/02_mmseqs_reps.fasta.aln,output=02a_tree_prep/03_trimmed.fasta.aln ../ROCkIn/01b_Sbatch/02e_seq_trim.sbatch
 
 # count sequences after trimming
-> grep -c '>' 03_trimmed.fasta.aln
-Sequences after trimming: 1119
+> grep -c '>' 02a_tree_prep/03_trimmed.fasta.aln
+Sequences after trimming: 1165
 
+Only 1 sequence was removed during alignmnet trimming.
 
 clean up sequence names for the tree.
 
-> python ../00c_Scripts/02e_clean_seq_names.py -i 02a_tree_prep/03_trimmed.fasta.aln
+> python ../ROCkIn/02_Python/02e_clean_seq_names.py -i 02a_tree_prep/03_trimmed.fasta.aln
 
 #######
 f. tree
@@ -174,14 +201,14 @@ f. tree
 
 Build phylogenetic tree with RAxML
 
-# single ML Distance tree
-> qsub -v input=02a_tree_prep/03_trimmed.fasta.aln,output=04a_RAxML-Distance,name=MCL_distance ../00b_PBS/02f_RAxML_AminoAcid-Distance.pbs 
+# setup directories
+> mkdir 03a_RAxML 03b_FastTree
 
 # bootstrapped ML tree
-> qsub -v input=02a_tree_prep/03_trimmed.fasta.aln,output=04b_RAxML-Bootstrap,name=MCL_bootstrap ../00b_PBS/02f_RAxML_AminoAcid-Bootstrap.pbs
+> sbatch --export input=02a_tree_prep/03_trimmed.fasta.aln,output=03a_RAxML,name=mcr ../ROCkIn/01b_Sbatch/02f_RAxML_AminoAcid-Bootstrap.sbatch
 
 # Fasttree - approximate maximum likelihood tree
-> qsub -v input=02a_tree_prep/03_trimmed.fasta.aln,output=04c_FastTree.nwk,n=mcr ../00b_PBS/02f_FastTree.pbs 
+> sbatch --export input=02a_tree_prep/03_trimmed.fasta.aln,output=03b_FastTree.nwk ../ROCkIn/01b_Sbatch/02f_FastTree.sbatch 
 
 #######
 g. Create annotated tsv and phylogenetic tree PDF
@@ -192,32 +219,35 @@ create annotated tsv file to explore clades.
 To further inform our decisions from the tree, we want to know which species and functional annotations are in each clade. To do this I wrote python code that uses the branch distance from the tree to create a distance matrix which is used in clustering algorithms. It gets clades from the the tree as clusters and creates a tsv file with species and annotation information for each sequence.
 
 # concatenate the curated sequences and the dereplicated filtered searched sequences
-> cat 00b_curated_seqs/ncbi_refgenes_mcr_renamed_reduced.fasta 02a_tree_prep/02_mmseqs_reps.fasta >> 02a_tree_prep/04_MCR_sequence_set.fasta
+> cat 00b_refseqs/RefSeqs_reduced.fasta 02a_tree_prep/02_mmseqs_reps.fasta >> 02a_tree_prep/04_mcr_sequence_set.fasta
+
+** watch out for a new line character between the refseqs and the other sequences. Sometimes it is missing.
 
 # setup directory
 > mkdir 05b_Clade_info_bootstrap 05c_Clade_info_fasttree
 
-from LOCAL: /Users/rothconrad/OneDrive - Georgia Institute of Technology/00_ROCker/03_mcr_colistin/02_ROCin-mcr
+# convert nwk to distance matrix, cluster the matrix and add annotations
 
-# cluster test 01:
-	min_cluster_size= 5% of total sequences in tree
-	min_samples=1
-	epsilon= 10th percentile of distances
+# RAxML Bootstrap
+> python ../ROCkIn/02_Python/02g_Tree_Distance_Cluster.py -i 03a_RAxML/RAxML_bestTree.mcr.RAxML -f 02a_tree_prep/04_mcr_sequence_set.fasta -o 04a_CladeInfo_RAxML/04a
 
-# newick distance and cluster
-> python ../../00d_Scripts/02g_Tree_Distance_Cluster.py -i 05e_Clade_info_bootstrap_hdb-01/RAxML_bestTree.MCL_bootstrap.RAxML -f 02a_tree_prep/04_MCR_sequence_set.fasta -o 05e_Clade_info_bootstrap_hdb-01/test02
+# FastTree 
+> python ../ROCkIn/02_Python/02g_Tree_Distance_Cluster.py -i 03b_FastTree.nwk -f 02a_tree_prep/04_mcr_sequence_set.fasta -o 04b_CladeInfo_FastTree/04b
 
-# redo clustering from distance matrix
-> python ../../00d_Scripts/02g_Tree_Distance_Cluster.py -d 05e_Clade_info_bootstrap_hdb-01/05d_Clade_info_distmat.tsv -f 02a_tree_prep/04_MCR_sequence_set.fasta -o 05e_Clade_info_bootstrap_hdb-01/test01
+# Plot the tree with cluster labels
 
-# plot tree
-> python ../../00d_Scripts/02i_Plot_Annotated_Tree_v2.py -n 05e_Clade_info_bootstrap_hdb-01/RAxML_bestTree.MCL_bootstrap.RAxML -a 05e_Clade_info_bootstrap_hdb-01/test02_annotated.tsv -o TREE_test01.pdf
+# RAxML
+
+> python ../ROCkIn/02_Python/02i_Plot_Annotated_Tree_v2.py -a 04a_CladeInfo_RAxML/04b_annotated.tsv -n 03a_RAxML/RAxML_bestTree.mcr.RAxML -o 04a_CladeInfo_RAxML/Clade_Tree_lnu.pdf
+
+# FastTree
+
+> python ../ROCkIn/02_Python/02i_Plot_Annotated_Tree_v2.py -a 04b_CladeInfo_FastTree/04b_annotated.tsv -n 03b_FastTree.nwk -o 04b_CladeInfo_FastTree/Clade_Tree_mcr.pdf
 
 Download the tree and tsv. Review to make positive and negative UniProt ID selections to give to ROCkOut.
-
 ###############################################################################
 #######
-Step 03: Build ROCker Models
+Step 03a: Build ROCker Model for mcr-1 target clade
 #################################
 ###############################################################################
 
@@ -254,5 +284,491 @@ from PACE: /storage/scratch1/9/rconrad6/ROCkOut/02_mcr/Update_1b
 
 # cd into model directory
 > python /PATH/TO/GIT/REPO/ROCkOut/rocker_main.py refine -d MODEL_DIRECTORY
+
+
+###############################################################################
+####### Score the model vs BLAST. TP, TN, FP, FN, F1 etc.
+#######
+
+from: /storage/scratch1/9/rconrad6/ROCkOut/02_mcr/Filter_test/01_mcr1
+# setup directories
+> mkdir 00_refseqs 01_read_sets 02_splits 03_blast_split 04_blast_cat 05_rocker_filter 06_rocker_filter_lenient 07_rocker_filter_OG
+
+
+from: /storage/scratch1/9/rconrad6/ROCkOut/02_mcr/Update_1/model
+# Collect the positive and negative tagged reads from the ROCkOut ouputs. They are in the negative and positive directories in the tagged reads supdirectories.
+> cat negative/*/tagged_reads/*_200_* > mcr1_negative_reads.fasta
+> cat positive/*/tagged_reads/*_200_* > mcr1_positive_reads.fasta
+> mv mcr1_*.fasta /storage/scratch1/9/rconrad6/ROCkOut/02_mcr/Filter_test/01_mcr1/
+# total reads
+> grep -c '>' mcr1_total_reads.fasta
+3,321,212
+
+# Collect the positive gene sequences to map to 
+from: /storage/scratch1/9/rconrad6/ROCkOut/02_mcr/Update_1/model
+> cat positive/*/target_protein/*_AA.fasta > mcr1_positive_set_AA.fasta
+> mv mcr1_positive_set_AA.fasta /storage/scratch1/9/rconrad6/ROCkOut/02_mcr/Filter_test/01_mcr1/refseqs/
+
+from: /storage/scratch1/9/rconrad6/ROCkOut/02_mcr/Filter_test/01_mcr1
+# Relabel the reads
+> python ../../../00d_Scripts/04a_relabel_reads_fasta.py -i mcr1_positive_reads.fasta -l positive
+> python ../../../00d_Scripts/04a_relabel_reads_fasta.py -i mcr1_negative_reads.fasta -l negative
+
+# combine positive and negative reads
+> cat mcr1_negative_reads.fasta mcr1_positive_reads.fasta > mcr1_total_reads.fasta
+
+# split the blast file for faster parallel read mapping
+> split -l 664242 -d mcr1_total_reads.fasta splits/mcr1_total_reads_
+
+# need to add a fasta extention for blast to work
+> for f in 02_splits/*; do mv $f ${f}.fasta; done
+
+# makeblastdb for refseqs & Run blast search
+> for f in 02_splits/*; do n=`basename $f`; sbatch -o 02b_Blastx_${n}.out -e 02b_Blastx_${n}.err --export ref=00_refseqs/mcr1_positive_set_AA.fasta,qry=${f},out=03_blast_split/${n} ../../../00d_Scripts/04b_Blastx.sbatch; sleep 5; done
+
+# cat split blasts
+> cat 02_splits/* > 04_blast_cat/mcr1_total_reads.blast
+
+####################
+# Added besthit filter
+> python ../../../00d_Scripts/04b_Besthit_Filter.py -i 04_blast_cat/mcr1_total_reads.blast
+
+Total number of entries in blast file: 14190284
+Number of duplicate blast matches: 11234138
+Number of best hit entries written to new file: 2956146
+
+########################################
+
+# Run ROCkOut filter
+# rocker filter script is currently just positional input
+> filter="/storage/scratch1/9/rconrad6/ROCkOut/ROCkOut/rocker_filter.py"
+# before besthit filter
+> python $filter ../../Update_1/model/ 04_blast_cat/mcr1_total_reads.blast 
+# after besthit filter
+> python $filter ../../Update_1/model/ 04_blast_cat/mcr1_total_reads.fltrdBstHts.blst
+> mv mcr1_total_reads_rockout_filter_* 05_rocker_filter/
+
+# Run ROCkOut filter lenient
+# rocker filter script is currently just positional input
+> filter="/storage/scratch1/9/rconrad6/ROCkOut/ROCkOut/rocker_filter_lenient.py"
+# before besthit filter
+> python $filter ../../Update_1/model/ 04_blast_cat/mcr1_total_reads.blast 
+# after besthit filter
+> python $filter ../../Update_1/model/ 04_blast_cat/mcr1_total_reads.fltrdBstHts.blst
+> mv mcr1_total_reads_rockout_filter_* 06_rocker_filter_lenient/
+
+# Run ROCkOut filter OG mid
+# rocker filter script is currently just positional input
+> filter="/storage/scratch1/9/rconrad6/ROCkOut/ROCkOut/rocker_filter_OG_midpt.py"
+# after besthit filter * did not test this before the besthit filter
+> python $filter ../../Update_1/model/ 04_blast_cat/mcr1_total_reads.fltrdBstHts.blst
+> mv mcr1_total_reads_rockout_filter_* 07_rocker_filter_OG/
+
+############################
+# score blast results 1e-3
+###
+
+# Before besthit filter
+> python ../../../00d_Scripts/04c_score_BlastTab_results.py -i 04_blast_cat/mcr1_total_reads.blast -pml 0 -psi 0 -evl 1e-3
+
+TP: 12561
+FP: 401212
+TN: 13769459
+FN: 7052
+precision: 0.030357224855174215
+recall: 0.6404425636057717
+F1: 0.05796680095803741
+
+# after besthit filter
+> python ../../../00d_Scripts/04c_score_BlastTab_results.py -i 04_blast_cat/mcr1_total_reads.fltrdBstHts.blst -pml 0 -psi 0 -evl 1e-3
+
+TP: 1505
+FP: 79200
+TN: 2875440
+FN: 1
+precision: 0.018648163063007248
+recall: 0.99933598937583
+F1: 0.03661310530221017
+
+############################
+# score blast results 1e-10
+###
+
+# Before besthit filter
+> python ../../../00d_Scripts/04c_score_BlastTab_results.py -i 04_blast_cat/mcr1_total_reads.blast -pml 0 -psi 0 -evl 1e-10
+
+TP: 11165
+FP: 204442
+TN: 13966229
+FN: 8448
+precision: 0.051784032985942016
+recall: 0.5692652832305104
+F1: 0.09493240370716775
+
+# after besthit filter
+> python ../../../00d_Scripts/04c_score_BlastTab_results.py -i 04_blast_cat/mcr1_total_reads.fltrdBstHts.blst -pml 0 -psi 0 -evl 1e-10
+
+TP: 1464
+FP: 27464
+TN: 2927176
+FN: 42
+precision: 0.05060840707964602
+recall: 0.9721115537848606
+F1: 0.096208188210554
+
+############################
+# score blast results 1e-20
+###
+
+# Before besthit filter
+> python ../../../00d_Scripts/04c_score_BlastTab_results.py -i 04_blast_cat/mcr1_total_reads.blast -pml 0 -psi 0 -evl 1e-20
+
+TP: 7323
+FP: 53512
+TN: 14117159
+FN: 12290
+precision: 0.12037478425248624
+recall: 0.3733748024269617
+F1: 0.18205548926014323
+
+# after besthit filter
+> python ../../../00d_Scripts/04c_score_BlastTab_results.py -i 04_blast_cat/mcr1_total_reads.fltrdBstHts.blst -pml 0 -psi 0 -evl 1e-20
+
+TP: 1370
+FP: 9710
+TN: 2944930
+FN: 136
+precision: 0.12364620938628158
+recall: 0.9096945551128818
+F1: 0.21770220880343236
+
+############################
+# score blast results 1e-30
+###
+
+# Before besthit filter
+> python ../../../00d_Scripts/04c_score_BlastTab_results.py -i 04_blast_cat/mcr1_total_reads.blast -pml 0 -psi 0 -evl 1e-30
+
+TP: 3428
+FP: 551
+TN: 14170120
+FN: 16185
+precision: 0.8615229957275697
+recall: 0.17478203232549838
+F1: 0.290606985418786
+
+# after besthit filter
+> python ../../../00d_Scripts/04c_score_BlastTab_results.py -i 04_blast_cat/mcr1_total_reads.fltrdBstHts.blst -pml 0 -psi 0 -evl 1e-30
+
+TP: 1205
+FP: 270
+TN: 2954370
+FN: 301
+precision: 0.8169491525423729
+recall: 0.800132802124834
+F1: 0.8084535390808453
+
+############################
+# score blast results CDC
+###
+
+# Before besthit filter
+> python ../../../00d_Scripts/04c_score_BlastTab_results.py -i 04_blast_cat/mcr1_total_reads.blast
+
+TP: 1949
+FP: 0
+TN: 14170671
+FN: 17664
+precision: 1.0
+recall: 0.0993728649365217
+F1: 0.18078100361747518
+
+# after besthit filter
+> python ../../../00d_Scripts/04c_score_BlastTab_results.py -i 04_blast_cat/mcr1_total_reads.fltrdBstHts.blst
+
+TP: 1421
+FP: 0
+TN: 2954640
+FN: 85
+precision: 1.0
+recall: 0.9435590969455512
+F1: 0.970960027331739
+
+############################
+# score rockout filter results
+###
+
+* I moved the prefilter files to the directory zz_pre_besthit
+
+> python ../../../00d_Scripts/04d_score_ROCker_results.py -p 05_rocker_filter/mcr1_total_reads_rockout_filter_passing_reads.fasta -f 05_rocker_filter/mcr1_total_reads_rockout_filter_failing_reads.fasta 
+
+# Before besthit filter
+TP: 3432
+FP: 35
+TN: 14170636
+FN: 16181
+precision: 0.9899048168445341
+recall: 0.17498597868760515
+F1: 0.29740034662045056
+
+# after besthit filter
+TP: 1395
+FP: 24
+TN: 2954616
+FN: 111
+precision: 0.9830866807610994
+recall: 0.9262948207171314
+F1: 0.9538461538461538
+
+############################
+# score rockout filter lenient results
+###
+
+> python ../../../00d_Scripts/04d_score_ROCker_results.py -p 06_rocker_filter_lenient/mcr1_total_reads_rockout_filter_passing_reads.fasta -f 06_rocker_filter_lenient/mcr1_total_reads_rockout_filter_failing_reads.fasta 
+
+# Before besthit filter
+TP: 5568
+FP: 5085
+TN: 14165586
+FN: 14045
+precision: 0.5226696705153477
+recall: 0.2838933360526182
+F1: 0.36793761977136064
+
+# after besthit filter
+TP: 1476
+FP: 2006
+TN: 2952634
+FN: 30
+precision: 0.42389431361286617
+recall: 0.9800796812749004
+F1: 0.5918203688853249
+
+############################
+# score rockout filter OG mid results
+###
+
+> python ../../../00d_Scripts/04d_score_ROCker_results.py -p 07_rocker_filter_OG/mcr1_total_reads_rockout_filter_passing_reads.fasta -f 06_rocker_filter_lenient/mcr1_total_reads_rockout_filter_failing_reads.fasta 
+
+* did not run this before besthit filter
+# after besthit filter
+
+TP: 1394
+FP: 96
+TN: 2954544
+FN: 112
+precision: 0.9355704697986578
+recall: 0.9256308100929614
+F1: 0.9305740987983978
+
+########################################################################
+## Score with diamondx instead of blastx
+
+## try using same database from blast for mcr1 positive set
+
+# create directories
+> mkdir 08_diamond_split 09_diamond_cat 10_diamond_rocker_filter 11_diamond_rocker_filter_lenient/ 12_diamond_rocker_filter_OG/
+
+# run diamondx
+> for f in 02_splits/*; do n=`basename $f`; sbatch -o 05a_Diamondx_${n}.out -e 05a_Diamondx_${n}.err --export ref=00_refseqs/mcr1_positive_set_AA.fasta,qry=${f},out=08_diamond_split/${n} ../../../00d_Scripts/05a_Diamondx.sbatch; sleep 5; done
+
+# cat split diamonds
+> cat 08_diamond_split/* > 09_diamond_cat/mcr1_total_reads.dmnd
+
+# besthit filter
+> python ../../../00d_Scripts/04b_Besthit_Filter.py -i 
+
+Total number of entries in blast file: 406950
+Number of duplicate blast matches: 289169
+Number of best hit entries written to new file: 117,781 
+
+############################
+# score blast results 1e-3
+###
+
+> python ../../../00d_Scripts/04c_score_BlastTab_results.py -i 09_diamond_cat/mcr1_total_reads.fltrdBstHts.blst -pml 0 -psi 0 -evl 1e-3
+
+TP: 1502
+FP: 43524
+TN: 72752
+FN: 3
+precision: 0.03335850397548083
+recall: 0.9980066445182725
+F1: 0.06455911113021426
+
+############################
+# score blast results 1e-10
+###
+
+> python ../../../00d_Scripts/04c_score_BlastTab_results.py -i 09_diamond_cat/mcr1_total_reads.fltrdBstHts.blst -pml 0 -psi 0 -evl 1e-10
+
+TP: 1457
+FP: 22111
+TN: 94165
+FN: 48
+precision: 0.06182111337406653
+recall: 0.9681063122923588
+F1: 0.11622063574362862
+
+############################
+# score blast results 1e-20
+###
+
+> python ../../../00d_Scripts/04c_score_BlastTab_results.py -i 09_diamond_cat/mcr1_total_reads.fltrdBstHts.blst -pml 0 -psi 0 -evl 1e-20
+
+TP: 1386
+FP: 3207
+TN: 113069
+FN: 119
+precision: 0.30176355323318094
+recall: 0.9209302325581395
+F1: 0.4545752705805182
+
+############################
+# score blast results 1e-30
+###
+
+> python ../../../00d_Scripts/04c_score_BlastTab_results.py -i 09_diamond_cat/mcr1_total_reads.fltrdBstHts.blst -pml 0 -psi 0 -evl 1e-30
+
+TP: 1233
+FP: 0
+TN: 116276
+FN: 272
+precision: 1.0
+recall: 0.8192691029900332
+F1: 0.9006574141709277
+
+############################
+# score blast results CDC
+###
+
+> python ../../../00d_Scripts/04c_score_BlastTab_results.py -i 09_diamond_cat/mcr1_total_reads.fltrdBstHts.blst
+
+TP: 1418
+FP: 0
+TN: 116276
+FN: 87
+precision: 1.0
+recall: 0.9421926910299003
+F1: 0.9702360588436538
+
+############################
+# score rockout filter results
+###
+
+# Run ROCkOut filter
+# activate rocker conda environment using alias
+> rockout
+# define path to filter script
+> filter="/storage/scratch1/9/rconrad6/ROCkOut/ROCkOut/rocker_filter.py"
+# rocker filter script is currently just positional input
+> python $filter ../../Update_1/model/ 09_diamond_cat/mcr1_total_reads.fltrdBstHts.blst
+> mv mcr1_total_reads_rockout_filter_* 10_diamond_rocker_filter/
+# score results
+> python ../../../00d_Scripts/04d_score_ROCker_results.py -p 10_diamond_rocker_filter/mcr1_total_reads_rockout_filter_passing_reads.fasta -f 10_diamond_rocker_filter/mcr1_total_reads_rockout_filter_failing_reads.fasta 
+
+TP: 1467
+FP: 1
+TN: 116275
+FN: 38
+Pos Total: 1468
+Neg Total: 116313
+Total: 117781
+Line Total: 117781
+precision: 0.9993188010899182
+recall: 0.9747508305647841
+F1: 0.9868819374369323
+
+############################
+# score rockout filter lenient results
+###
+
+# Run ROCkOut filter
+# activate rocker conda environment using alias
+> rockout
+# define path to filter script
+> filter="/storage/scratch1/9/rconrad6/ROCkOut/ROCkOut/rocker_filter_lenient.py"
+# rocker filter script is currently just positional input
+> python $filter ../../Update_1/model/ 09_diamond_cat/mcr1_total_reads.fltrdBstHts.blst
+> mv mcr1_total_reads_rockout_filter_* 11_diamond_rocker_filter_lenient/
+# score results
+> python ../../../00d_Scripts/04d_score_ROCker_results.py -p 11_diamond_rocker_filter_lenient/mcr1_total_reads_rockout_filter_passing_reads.fasta -f 11_diamond_rocker_filter_lenient/mcr1_total_reads_rockout_filter_failing_reads.fasta 
+
+TP: 1499
+FP: 1484
+TN: 114792
+FN: 6
+Pos Total: 2983
+Neg Total: 114798
+Total: 117781
+Line Total: 117781
+precision: 0.5025142474019444
+recall: 0.9960132890365448
+F1: 0.6680035650623886
+
+############################
+# score rockout filter OG results
+###
+
+# Run ROCkOut filter
+# activate rocker conda environment using alias
+> rockout
+# define path to filter script
+> filter="/storage/scratch1/9/rconrad6/ROCkOut/ROCkOut/rocker_filter_OG_midpt.py"
+# rocker filter script is currently just positional input
+> python $filter ../../Update_1/model/ 09_diamond_cat/mcr1_total_reads.fltrdBstHts.blst
+> mv mcr1_total_reads_rockout_filter_* 12_diamond_rocker_filter_OG/
+# score results
+> python ../../../00d_Scripts/04d_score_ROCker_results.py -p 12_diamond_rocker_filter_OG/mcr1_total_reads_rockout_filter_passing_reads.fasta -f 12_diamond_rocker_filter_OG/mcr1_total_reads_rockout_filter_failing_reads.fasta 
+
+TP: 1464
+FP: 10
+TN: 116266
+FN: 41
+Pos Total: 1474
+Neg Total: 116307
+Total: 117781
+Line Total: 117781
+precision: 0.9932157394843962
+recall: 0.9727574750830564
+F1: 0.9828801611278952
+
+###############################################################################
+#######
+Step 03b: Build broad ROCker Model for all mcr's
+#################################
+###############################################################################
+
+With this model we will explore if a single ROCker Model can capture the full breadth of sequence diversity for all the mcr refseqs and the uniprot matches returned. Looking at the assigned annotations from the uniprot matches and the multiple sequence alignment all genes seem probable lipid A modifier like EptA. The SwissProt reviewed eptA proteins for E.coli and Salmonella typhimurium both fall just outside the sequence search space of the mcr genes around 35% AA sequence similarity to the E.coli mcr-1. Also, the cluster clade 7 appears at the root and most distant from the other cluster clades. 
+
+This model will use clade 7 and the two reviewed eptA sequences (EPTA_ECOLI and EPTA_SALTY) as negative references.
+All other sequences will be positive references.
+
+Collect a pos and neg .txt file for each model within a separate directory for each model and upload to PACE cluster.
+
+# Download, Build and plot the model in step. using cluster clade 7 and eptA as negative
+> sbatch --export odir=model,pos=pos.txt,neg=neg.txt ../../00b_sbatch/ROCkOut.sbatch
+
+# Using no negative. All positive. mcr's are eptA's and I don't have a close negative group.
+> sbatch --export odir=model,pos=pos.txt ../../00b_sbatch/ROCkOut_posOnly.sbatch
+
+
+
+python /storage/scratch1/9/rconrad6/ROCkOut/ROCkOut/rockout_main.py download -d model -p pos.txt -n neg.txt
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
