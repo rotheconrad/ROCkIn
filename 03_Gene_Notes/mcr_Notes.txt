@@ -224,7 +224,7 @@ To further inform our decisions from the tree, we want to know which species and
 ** watch out for a new line character between the refseqs and the other sequences. Sometimes it is missing.
 
 # setup directory
-> mkdir 05b_Clade_info_bootstrap 05c_Clade_info_fasttree
+> mkdir 04a_CladeInfo_RAxML 04b_CladeInfo_FastTree
 
 # convert nwk to distance matrix, cluster the matrix and add annotations
 
@@ -746,17 +746,18 @@ All other sequences will be positive references.
 
 Collect a pos and neg .txt file for each model within a separate directory for each model and upload to PACE cluster.
 
+from: /storage/scratch1/9/rconrad6/ROCkOut/02_mcr
+
 # Download, Build and plot the model in step. using cluster clade 7 and eptA as negative
 > sbatch --export odir=model,pos=pos.txt,neg=neg.txt ../../00b_sbatch/ROCkOut.sbatch
+** this model looks really bad and does not work.
 
 # Using no negative. All positive. mcr's are eptA's and I don't have a close negative group.
 > sbatch --export odir=model,pos=pos.txt ../../00b_sbatch/ROCkOut_posOnly.sbatch
 
+# Score the model
 
-
-python /storage/scratch1/9/rconrad6/ROCkOut/ROCkOut/rockout_main.py download -d model -p pos.txt -n neg.txt
-
-
+from: /storage/scratch1/9/rconrad6/ROCkOut/02_mcr/Filter_test/02_Allmcr_pos
 
 
 
@@ -764,6 +765,9 @@ python /storage/scratch1/9/rconrad6/ROCkOut/ROCkOut/rockout_main.py download -d 
 
 
 
+Monday Jan 30th. I went back and added eptA to the mcr tree. The swissprot reviewed eptA sequence for ecoli and salmonella  are around 35% AAI to the mcr's and didn't turn up in the initial blast searches. But it seems like the majority of trembl sequences are annotated as eptA. mcr is likely an eptA that got moved to a plasmid by transposons.
+
+RAxML did not finish with the wall time limit. Now we're at a PACE maintenance cycle. Restart RAxML with more wall time and maybe more cpu after maintenance.
 
 
 
