@@ -6,6 +6,8 @@ This pipeline walks the researcher through the process of collecting the necessa
 
 To use the provided PBS or Sbatch scripts replace "PATH/to/GitHub/repo" with the path to your local copy of this Github repo, and replace all the "YOUR_PROMPTs" with the relevant information.
 
+The steps are left separately so the user can more easily follow the workflow, and so individual steps can be more efficiently parallelized depending on the users system.
+
 ## Dependencies
 
 - [BLAST+](https://blast.ncbi.nlm.nih.gov/Blast.cgi?PAGE_TYPE=BlastDocs&DOC_TYPE=Download)
