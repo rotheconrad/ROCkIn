@@ -17,9 +17,9 @@ This script also outputs histograms for:
     3) 'pml': 'Sequence Alignment Ratio (%)',
     4) 'qlen': 'Query Length Histogram (AA)'
 
-This script reads passing blast matches into memormy
+This script reads passing blast matches into memory
 RAM usage depends on file size of passing matches.
-This could be close to the size of the tabular blast file.
+RAM requirement could be close to the size of the tabular blast file.
 
 This tool takes the following input parameters:
 
@@ -88,7 +88,7 @@ def best_hits(query, bitscore, d, line, dups):
     return d, dups
 
 
-def tabular_BlastPlus_filter(infile, pml, pid, sim):
+def tabular_BlastPlus_filter(infile, pml, pid):
 
     d = {} # initialize dictionary for bitscore besthits
     dups = 0 # counter for number of duplicate matches for reads
@@ -107,7 +107,7 @@ def tabular_BlastPlus_filter(infile, pml, pid, sim):
             aLen = int(X[3]) # read alignment length
             qLen = int(X[12]) # full length of read
             pMatch = aLen / qLen # percent match length of read length
-            if pID < sim and pID >= pid and pMatch >= pml:
+            if pID >= pid and pMatch >= pml:
                 d, dups = best_hits(query, bitscore, d, l, dups)
                 passes += 1
             else:
@@ -246,14 +246,6 @@ def main():
         default=30
         )
     parser.add_argument(
-        '-sim', '--similar_sequence_filter',
-        help='(Optional) Remove similar sequences >= (Default = 98).',
-        metavar='',
-        type=float,
-        required=False,
-        default=98
-        )
-    parser.add_argument(
         '-o', '--output_prefix',
         help='Please specify the prefix to use for output files!',
         metavar=':',
@@ -262,19 +254,20 @@ def main():
         )
     args=vars(parser.parse_args())
 
+    # define input parameters
+    infile = args['in_file']
+    outpre = args['output_prefix']
+    pml = args['percent_match_length']
+    pid = args['percent_identity']
+
     # Do what you came here to do:
     print('\n\nRunning Script...\n')
 
     # get the filtered best hits
-    filtered_best_hits = tabular_BlastPlus_filter(
-                                            args['in_file'],
-                                            args['percent_match_length'],
-                                            args['percent_identity'],
-                                            args['similar_sequence_filter']
-                                            )
+    filtered_best_hits = tabular_BlastPlus_filter(infile, pml, pid)
 
     # Write output file
-    outfile = args['in_file'].split('.')[0] + '.fltrdBstHts.blst'
+    outfile = infile.split('.')[0] + '.fltrdBstHts.blst'
     with open(outfile, 'w') as o:
 
         for k,v in filtered_best_hits.items(): o.write(random.choice(v))
@@ -286,7 +279,7 @@ def main():
     data = parse_blast(outfile)
 
     for key in ['pid', 'alen', 'pml', 'qlen']:
-        _ = plot_hist(data, args['output_prefix'], key)
+        _ = plot_hist(data, outpre, key)
 
     print('\n\nComplete success space cadet! Hold on to your boots.\n\n')
 

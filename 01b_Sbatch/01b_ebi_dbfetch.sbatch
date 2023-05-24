@@ -5,8 +5,8 @@
 #SBATCH -N 1 --ntasks-per-node=1
 #SBATCH --mem=1G
 #SBATCH -t 24:00:00
-#SBATCH -o 00b_ebi_dbfetch.out
-#SBATCH -e 00b_ebi_dbfetch.err
+#SBATCH -o 01b_ebi_dbfetch.out
+#SBATCH -e 01b_ebi_dbfetch.err
 
 cd $SLURM_SUBMIT_DIR
 

@@ -5,7 +5,7 @@
 #SBATCH -N 1 --ntasks-per-node=2
 #SBATCH --mem=2G
 #SBATCH -t 12:00:00
-#SBATCH -o 002b_BlastP.out
+#SBATCH -o 02b_BlastP.out
 #SBATCH -e 02b_BlastP.err
 
 # Change to working directory
@@ -30,9 +30,8 @@ blastp -num_threads 2 -max_target_seqs 10 \
 '6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qlen slen'
 
 # Filter Blast and plot hists
-# 1) Remove matches >= 98% identity to verified sequences
-# 2) Removes matches <= 30% identity to verified sequences
-# 3) Remove matches with <= 50% sequence alignment (alignment length / query sequence length).
+# 1) Removes matches <= 30% identity to verified sequences
+# 2) Remove matches with <= 50% sequence alignment (alignment length / query sequence length).
 
 python ${scripts}/02b_Blastp_filter_hist.py -i ${out}.blast -o ${out}
 

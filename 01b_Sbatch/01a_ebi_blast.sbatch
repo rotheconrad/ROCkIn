@@ -5,8 +5,8 @@
 #SBATCH -N 1 --ntasks-per-node=1
 #SBATCH --mem=1G
 #SBATCH -t 24:00:00
-#SBATCH -o 00a_ebi_blast.out
-#SBATCH -e 00a_ebi_blast.err
+#SBATCH -o 01a_ebi_blast.out
+#SBATCH -e 01a_ebi_blast.err
 
 cd $SLURM_SUBMIT_DIR
 
