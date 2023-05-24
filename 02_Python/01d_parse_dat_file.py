@@ -58,7 +58,9 @@ def get_fasta(f, ofile):
         elif line.startswith(' '):
             X = line.rstrip().split()
             sequence.extend(X)
-
+        # stop after the first entry in dat file.
+        elif line.startswith('//'):
+            break
     # put the pieces together
     tax = ';'.join(taxonomy)
     seq = ''.join(sequence)
