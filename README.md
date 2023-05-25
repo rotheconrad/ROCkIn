@@ -244,7 +244,20 @@ Sbatch Example:
 sbatch --export infile=02a_tree_prep/01_MCR_fltr_ebi_blast_fltrd.fasta,odir=02a_tree_prep /Path/to/GitHub/repo/01b_Sbatch/27c_MMSeqs2_Cluster.sbatch
 ```
 
-#### Step 4: Multiple Sequence Alignment
+# PART 03: Create and trim multiple align. Build Phylogenetic tree and create clades.
+
+Part 3 is divided into the following series of steps:
+
+1. Generate a multiple sequence alignment (MSA).
+1. Trim/clean the multiple sequence alignment.
+1. Build phylogenetic tree.
+1. Compute branch distance and cluster sequences into clades.
+1. Generate annotation file and tree figure labeled by cluster.
+
+Our goal is to build a phylogenetic tree with our curated sequences (RefSeqs.faa) and known surrounding sequence diversity (ALL_EBI_BLAST_MATCHES.faa) that we will use to make decisions about positive and negative sequence sets for training the ROCker model.
+
+
+#### Step 1: Multiple Sequence Alignment
 
 We need a good multiple sequence alignment to build the phylogenetic tree. We'll start with an alignment using only the curated sequences (RefSeqs.faa). We can check this alignment with something like [AliView](https://ormbunkar.se/aliview/) and make manual adjustments if necessary, then we'll align the searched sequences (mmseqs_reps.fasta) to this alignment.
 
@@ -265,7 +278,7 @@ Sbatch Example:
 sbatch --export verified=RefSeqs.faa,newseqs=02a_tree_prep/mmseqs_reps.fasta /Path/to/GitHub/repo/01b_Sbatch/02d_seq_alignment.sbatch
 ```
 
-#### Step 5: Trim/Clean Multiple Sequence Alignment
+#### Step 2: Trim/Clean Multiple Sequence Alignment
 
 Before building a phylogenetic tree, MSAs should be cleaned to removed spurious sequences and columns consisting mainly of gaps. TrimAl's algorithm does a pretty good and quick job, but it is still recommended to inspect the alignment manually as well with something like [AliView](https://ormbunkar.se/aliview/).
 
@@ -306,7 +319,7 @@ Sbatch Example:
 sbatch --export input=02a_tree_prep/my_MSA.aln,output=02a_tree_prep/my_MSA_trimmed.aln /Path/to/GitHub/repo/01b_Sbatch/02e_seq_trim.sbatch
 ```
 
-#### Step 6: Build Phylogenetic Tree
+#### Step 3: Build Phylogenetic Tree
 
 Now that we have a good multiple sequence alignment, we are ready to build the tree. Here is an example with FastTree and RAxML. FastTree is recomended unless you are using a cluster. RAxML has very long run times. This step will provide you with Newick formated files than can be viewed/edited with tools such as [FigTree](http://tree.bio.ed.ac.uk/software/figtree/) or [iTol](https://itol.embl.de/).
 
@@ -331,10 +344,10 @@ sbatch --export input=02a_tree_prep/my_MSA_trimmed.aln,output=02a_tree_prep/Tree
 sbatch --export input=02a_tree_prep/my_MSA_trimmed.aln,output=02a_tree_prep/Tree_FastTree.nwk /Path/to/GitHub/repo/01b_Sbatch/02f_FastTree.sbatch
 ```
 
-#### Step 7: Compute branch distance and cluster sequences into clades.
-#### Step 8: Generate annotation file and tree figure labeled by cluster.
+#### Step 4: Compute branch distance and cluster sequences into clades.
+#### Step 5: Generate annotation file and tree figure labeled by cluster.
 
-*Step 7 & 8 are combined.*
+*Step 4 & 5 are combined.*
 
 Create an organized and annotated tsv file to explore clustered clades and make decisions for ROCkOut inputs. The annotation information is pulled from the fasta deflines (where we stored the information from the .dat files back at the begining) and organized into columns. The branch distances are calculated between all sequences and the HDBSCAN algorithm is used to cluster the sequences into initial clades.
 
@@ -372,4 +385,10 @@ python ${scripts}/02i_Plot_Annotated_Tree_v2.py -n 02a_tree_prep/02a_tree_prep/T
 ```
 
 ![Example phylogenetic tree labelled by assigned cluster/clade.](https://github.com/rotheconrad/ROCkIn/blob/main/05_Example_Figs/07_Example-C.png)
+
+# PART 04: Make UniProt ID selections.
+
+ROCkOut takes as input a list of UniProt IDs. pos.txt and option neg.txt depending on your reference sequence, functional target, and phylogenetic tree. Some gene targets may only need positive target sequences (pos.txt) while other genes clearly will have a closely related but off target clade appear in the phylogenetic and sequence similarity analyses above. In which case they can be used as neagetive targets (neg.txt). pos.txt and optional neg.txt are simply single column text files with one uniprot entry per line.
+
+Once you've made your selection, proceed to ROCkOut!
 
