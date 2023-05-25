@@ -178,9 +178,8 @@ The initial sequence search does not have great options to filter the matches th
 To filter our search results, I run Blastp locally using the RefSeqs.faa as the reference database and the Blast search results as the query. Then I use that to filter which sequences to keep.
 
 I wrote a Python script that applies 3 filters:
-	1) Remove matches >= 98% identity to verified sequences
-	2) Removes matches <= 30% identity to verified sequences
-	3) Remove matches with <= 50% sequence alignment (alignment length / query sequence length).
+	1 Removes matches <= 30% identity to verified sequences
+	1 Remove matches with <= 50% sequence alignment (alignment length / query sequence length).
 
 It also plots histograms of each parameter post filtering and can be rerun with different filtering options if neccessary.
 
