@@ -65,6 +65,7 @@ All rights reserved
 '''
 
 import argparse, random
+from collections import defaultdict
 import matplotlib
 matplotlib.use('PDF')
 import matplotlib.pyplot as plt
@@ -245,18 +246,10 @@ def main():
         required=False,
         default=30
         )
-    parser.add_argument(
-        '-o', '--output_prefix',
-        help='Please specify the prefix to use for output files!',
-        metavar=':',
-        type=str,
-        required=True
-        )
     args=vars(parser.parse_args())
 
     # define input parameters
     infile = args['in_file']
-    outpre = args['output_prefix']
     pml = args['percent_match_length']
     pid = args['percent_identity']
 
@@ -267,17 +260,38 @@ def main():
     filtered_best_hits = tabular_BlastPlus_filter(infile, pml, pid)
 
     # Write output file
-    outfile = infile.split('.')[0] + '.fltrdBstHts.blst'
-    with open(outfile, 'w') as o:
+    outfile = infile.split('.')[0] + '_fltrdBstHts.blst'
+    outfile100 = infile.split('.')[0] + '_pID100.blst'
+    pID100 = defaultdict(list)
 
-        for k,v in filtered_best_hits.items(): o.write(random.choice(v))
+    with open(outfile, 'w') as o, open(outfile100, 'w') as o100:
+
+        for k,v in filtered_best_hits.items():
+            # write 100% ID's to separate file
+            pid = float(v[0].split('\t')[2])
+            if pid == 100:
+                for line in v:
+                    X = line.split('\t')
+                    query = X[0].split('//')[0]
+                    subject = X[1]
+                    pID100[subject].append(query)
+                    o100.write(line)
+
+            o.write(random.choice(v))
+            
         print(
             'Number of best hit entries written to new file:',
             len(filtered_best_hits), '\n\n'
             )
 
-    data = parse_blast(outfile)
+    pID100out = infile.split('.')[0] + '_pID100_list.txt'
+    with open(pID100out, 'w') as out:
+        for subject, queries in pID100.items():
+            qs = ','.join(queries)
+            out.write(f'{subject}\t{qs}\n')
 
+    data = parse_blast(outfile)
+    outpre = infile.split('.')[0] + '_fltrdBstHts'
     for key in ['pid', 'alen', 'pml', 'qlen']:
         _ = plot_hist(data, outpre, key)
 

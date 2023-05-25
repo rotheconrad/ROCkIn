@@ -177,11 +177,13 @@ The initial sequence search does not have great options to filter the matches th
 
 To filter our search results, I run Blastp locally using the RefSeqs.faa as the reference database and the Blast search results as the query. Then I use that to filter which sequences to keep.
 
-I wrote a Python script that applies 3 filters:
+I wrote a Python script that applies 2 filters:
 	1 Removes matches <= 30% identity to verified sequences
 	1 Remove matches with <= 50% sequence alignment (alignment length / query sequence length).
 
-It also plots histograms of each parameter post filtering and can be rerun with different filtering options if neccessary.
+This script outputs 100% sequence matches separately as well in tabular blast, fasta, and in a text list of Reference sequences with their corresponding list of uniprot IDs with 100% sequence identity. Ideally, we find at least 1 uniprot ID for each reference sequence. If not, we can look through the filtered blast output and find the closest matches to our reference sequences available in the uniprot database. This important because we'll want to include 1 exact match (or closest match) uniprot ID in our final input list to ROCkOut. During the similar sequence clustering these ID's can sometimes be dereplicated as they aren't guaranteed selection as a cluster representative.
+
+The script also plots histograms of each parameter post filtering and can be rerun with different filtering options if neccessary.
 
 ```bash
 # make blast database from RefSeqs.faa
@@ -194,7 +196,7 @@ blastp -num_threads 2 -max_target_seqs 10 \
 scripts=/Path/to/GitHub/repo/02_Python
 # filter blast results
 python ${scripts}/02b_Blastp_filter_hist.py -i 02a_tree_prep/FILTER_EBI_BLAST_MATCHES.blast -o 02a_tree_prep/FILTER_EBI_BLAST_MATCHES.fltrd.blast
-# retrieve fasta sequences matches filtered blast results
+# retrieve fasta sequences for the filtered blast results
 python ${scripts}/02c_Get_Fasta_from_Filtered_Blast.py -b 02a_tree_prep/FILTER_EBI_BLAST_MATCHES.fltrd.blast -q 02a_tree_prep/DEDUP_EBI_BLAST_MATCHES.faa -o 02a_tree_prep/FILTER_EBI_BLAST_MATCHES.faa
 ```
 
