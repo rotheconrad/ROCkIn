@@ -22,7 +22,7 @@ mmseqs createdb $infile ${oDir}/$DB/$DB --dbtype 1
 # Cluster input sequences at 90% amino acid sequence identity
 C90=02_mmseqs_results
 mkdir ${oDir}/$C90
-mmseqs cluster ${oDir}/$DB/$DB ${oDir}/$C90/$C90 tmp --min-seq-id 0.90 --cov-mode 1 -c 0.5 --cluster-mode 2 --cluster-reassign --threads 2
+mmseqs cluster ${oDir}/$DB/$DB ${oDir}/$C90/$C90 ${oDir}/tmp --min-seq-id 0.90 --cov-mode 1 -c 0.5 --cluster-mode 2 --cluster-reassign --threads 2
 # convert to tsv format
 mmseqs createtsv ${oDir}/$DB/$DB ${oDir}/$DB/$DB ${oDir}/$C90/$C90 ${oDir}/$C90.tsv --threads 2
 # for amino acid clustering get the representative sequence for annotation.
