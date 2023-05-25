@@ -12,26 +12,26 @@
 cd $SLURM_SUBMIT_DIR
 
 # make a tmp folder
-mkdir ${odir}/tmp
+mkdir ${oDir}/tmp
 
 # create an mmseqs database
 DB=02_mmseqsDB
-mkdir ${odir}/$DB
-mmseqs createdb $infile ${odir}/$DB/$DB --dbtype 1
+mkdir ${oDir}/$DB
+mmseqs createdb $infile ${oDir}/$DB/$DB --dbtype 1
 
 # Cluster input sequences at 90% amino acid sequence identity
 C90=02_mmseqs_results
-mkdir ${odir}/$C90
-mmseqs cluster ${odir}/$DB/$DB ${odir}/$C90/$C90 tmp --min-seq-id 0.90 --cov-mode 1 -c 0.5 --cluster-mode 2 --cluster-reassign --threads 2
+mkdir ${oDir}/$C90
+mmseqs cluster ${oDir}/$DB/$DB ${oDir}/$C90/$C90 tmp --min-seq-id 0.90 --cov-mode 1 -c 0.5 --cluster-mode 2 --cluster-reassign --threads 2
 # convert to tsv format
-mmseqs createtsv ${odir}/$DB/$DB ${odir}/$DB/$DB ${odir}/$C90/$C90 ${odir}/$C90.tsv --threads 2
+mmseqs createtsv ${oDir}/$DB/$DB ${oDir}/$DB/$DB ${oDir}/$C90/$C90 ${oDir}/$C90.tsv --threads 2
 # for amino acid clustering get the representative sequence for annotation.
 C90rep=02_mmseqs_reps
-mkdir ${odir}/$C90rep
-mmseqs createsubdb ${odir}/$C90/$C90 ${odir}/$DB/$DB ${odir}/$C90rep/$C90rep
-mmseqs convert2fasta ${odir}/$C90rep/$C90rep ${odir}/${C90rep}.fasta
+mkdir ${oDir}/$C90rep
+mmseqs createsubdb ${oDir}/$C90/$C90 ${oDir}/$DB/$DB ${oDir}/$C90rep/$C90rep
+mmseqs convert2fasta ${oDir}/$C90rep/$C90rep ${oDir}/${C90rep}.fasta
 
-rm -r ${odir}/tmp
+rm -r ${oDir}/tmp
 
 ## Run Log ##
-## sbatch --export infile=,odir= /Path/to/GitHub/repo/01b_Sbatch/27c_MMSeqs2_Cluster.sbatch
+## sbatch --export infile=,oDir= /Path/to/GitHub/repo/01b_Sbatch/02c_mmseqs.sbatch
