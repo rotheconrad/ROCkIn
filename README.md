@@ -14,8 +14,7 @@ The steps are left separately so the user can more easily follow the workflow, a
 - [MMseqs2](https://github.com/soedinglab/MMseqs2)
 - [Clustal Omega](http://www.clustal.org/omega/)
 - [TrimAl](http://trimal.cgenomics.org/)
-- [FastTree](http://www.microbesonline.org/fasttree/)
-- [RAxML](https://cme.h-its.org/exelixis/web/software/raxml/)
+- [IQ-TREE](http://www.iqtree.org/)
 - [Python](https://www.python.org/)
 
  #### References
@@ -24,8 +23,9 @@ The steps are left separately so the user can more easily follow the workflow, a
  1. Steinegger M, Söding J. MMseqs2 enables sensitive protein sequence searching for the analysis of massive data sets. Nature biotechnology. 2017 Nov;35(11):1026-8.
  1. Sievers F, Wilm A, Dineen DG, Gibson TJ, Karplus K, Li W, Lopez R, McWilliam H, Remmert M, Söding J, Thompson JD, Higgins DG (2011). Fast, scalable generation of high-quality protein multiple sequence alignments using Clustal Omega. Molecular Systems Biology 7:539 doi:10.1038/msb.2011.75
  1. Salvador Capella-Gutiérrez, José M. Silla-Martínez, Toni Gabaldón, trimAl: a tool for automated alignment trimming in large-scale phylogenetic analyses, Bioinformatics, Volume 25, Issue 15, 1 August 2009, Pages 1972–1973
- 1. Price, M.N., Dehal, P.S., and Arkin, A.P. (2010) FastTree 2 -- Approximately Maximum-Likelihood Trees for Large Alignments. PLoS ONE, 5(3):e9490. doi:10.1371/journal.pone.0009490.
- 1. A. Stamatakis: "RAxML Version 8: A tool for Phylogenetic Analysis and Post-Analysis of Large Phylogenies". In Bioinformatics, 2014, open access.
+ 1. B.Q. Minh, H.A. Schmidt, O. Chernomor, D. Schrempf, M.D. Woodhams, A. von Haeseler, R. Lanfear (2020) IQ-TREE 2: New models and efficient methods for phylogenetic inference in the genomic era. Mol. Biol. Evol., 37:1530-1534. https://doi.org/10.1093/molbev/msaa015
+ 1. S. Kalyaanamoorthy, B.Q. Minh, T.K.F. Wong, A. von Haeseler, and L.S. Jermiin (2017) ModelFinder: fast model selection for accurate phylogenetic estimates. Nat. Methods, 14:587–589. DOI: 10.1038/nmeth.4285
+ 1. D.T. Hoang, O. Chernomor, A. von Haeseler, B.Q. Minh, and L.S. Vinh (2018) UFBoot2: Improving the ultrafast bootstrap approximation. Mol. Biol. Evol., 35:518–522. https://doi.org/10.1093/molbev/msx281
  1. Sanner MF. Python: a programming language for software integration and development. J Mol Graph Model. 1999 Feb 1;17(1):57-61.
 
 #### Python Packages
@@ -256,6 +256,7 @@ Part 3 is divided into the following series of steps:
 
 Our goal is to build a phylogenetic tree with our curated sequences (RefSeqs.faa) and known surrounding sequence diversity (ALL_EBI_BLAST_MATCHES.faa) that we will use to make decisions about positive and negative sequence sets for training the ROCker model.
 
+Repeat Part 03 with one or more SecRep testing sets as needed, if necessary.
 
 #### Step 1: Multiple Sequence Alignment
 
@@ -321,26 +322,23 @@ sbatch --export input=02a_tree_prep/my_MSA.aln,output=02a_tree_prep/my_MSA_trimm
 
 #### Step 3: Build Phylogenetic Tree
 
-Now that we have a good multiple sequence alignment, we are ready to build the tree. Here is an example with FastTree and RAxML. FastTree is recomended unless you are using a cluster. RAxML has very long run times. This step will provide you with Newick formated files than can be viewed/edited with tools such as [FigTree](http://tree.bio.ed.ac.uk/software/figtree/) or [iTol](https://itol.embl.de/).
+Now that we have a good multiple sequence alignment, we are ready to build the tree. There are many Phylogenetic tree building tools. Here we will use [IQ-Tree](http://www.iqtree.org/).
+
+This step will provide you with Newick formated files than can be viewed/edited with tools such as [FigTree](http://tree.bio.ed.ac.uk/software/figtree/) or [iTol](https://itol.embl.de/).
 
 
 ```bash
-FastTree 02a_tree_prep/my_MSA_trimmed.aln > 02a_tree_prep/Tree_FastTree.nwk
+iqtree
 ``` 
 
-PBS Example:
+PBS Example: ### CHANGE TO IQTREE
 ```bash
-# bootstrapped ML tree w/ RAxML
-qsub -v input=02a_tree_prep/my_MSA_trimmed.aln,output=02a_tree_prep/Tree_Bootstrap /Path/to/GitHub/repo/01a_PBS/02f_RAxML_AminoAcid-Bootstrap.pbs
-
 # Fasttree - approximate maximum likelihood tree
 qsub -v input=02a_tree_prep/my_MSA_trimmed.aln,output=02a_tree_prep/Tree_FastTree.nwk /Path/to/GitHub/repo/01a_PBS/02f_FastTree.pbs 
 ```
 
 Sbatch Example:
 ```bash
-sbatch --export input=02a_tree_prep/my_MSA_trimmed.aln,output=02a_tree_prep/Tree_Bootstrap /Path/to/GitHub/repo/01b_Sbatch/002f_RAxML_AminoAcid-Bootstrap.sbatch
-
 sbatch --export input=02a_tree_prep/my_MSA_trimmed.aln,output=02a_tree_prep/Tree_FastTree.nwk /Path/to/GitHub/repo/01b_Sbatch/02f_FastTree.sbatch
 ```
 
