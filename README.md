@@ -298,6 +298,16 @@ trimal -in 02a_tree_prep/my_MSA.aln -out 02a_tree_prep/my_MSA_trimmed.aln -resov
 grep -c '>' 02a_tree_prep/my_MSA_trimmed.aln
 ```
 
+PBS Example:
+```bash
+qsub -v input=02a_tree_prep/my_MSA.aln,output=02a_tree_prep/my_MSA_trimmed.aln /Path/to/GitHub/repo/01a_PBS/02e_seq_trim.pbs
+``` 
+
+Sbatch Example:
+```bash
+sbatch --export input=02a_tree_prep/my_MSA.aln,output=02a_tree_prep/my_MSA_trimmed.aln /Path/to/GitHub/repo/01b_Sbatch/02e_seq_trim.sbatch
+```
+
 At his point the sequence names look something like this:
 >A0A8E0FMZ4_ECOLX//Arylsulfatase//Escherichia
 
@@ -307,17 +317,7 @@ Which is really hard to look at on the tips of the tree. This script splits at t
 ```bash
 # clean up sequence names for the tree.
 # this script alters the file in place. no new file created.
-python /Path/to/GitHub/repo/02_Python/02e_clean_seq_names.py -i 02a_tree_prep/my_MSA_trimmed.aln
-```
-
-PBS Example:
-```bash
-qsub -v input=02a_tree_prep/my_MSA.aln,output=02a_tree_prep/my_MSA_trimmed.aln /Path/to/GitHub/repo/01a_PBS/02e_seq_trim.pbs
-``` 
-
-Sbatch Example:
-```bash
-sbatch --export input=02a_tree_prep/my_MSA.aln,output=02a_tree_prep/my_MSA_trimmed.aln /Path/to/GitHub/repo/01b_Sbatch/02e_seq_trim.sbatch
+python /Path/to/GitHub/repo/02_Python/03a_clean_seq_names.py -i 02a_tree_prep/my_MSA_trimmed.aln
 ```
 
 #### Step 3: Build Phylogenetic Tree
