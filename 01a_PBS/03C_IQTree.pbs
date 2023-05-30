@@ -1,0 +1,20 @@
+#PBS -N IQTree
+#PBS -l nodes=1:ppn=20
+#PBS -l mem=50gb
+#PBS -l walltime=1:00:00:00
+#PBS -q YOUR_QUEUE
+#PBS -A YOUR_ACCOUNT
+#PBS -o 03c_IQTree_${n}.out
+#PBS -e 03c_IQTree_${n}.err
+
+# Change to working directory
+cd $PBS_O_WORKDIR
+
+# Load your servers fasttree module or make FastTree available in your PATH
+# IQTREE works well with a conda install
+
+iqtree -s ${input} --prefix ${outpre} -m MFP -alrt 1000 -B 1000 -T THREADS
+
+## Run Log ##
+## qsub -v input=fasta.aln,outpre= /Path/to/GitHub/repo/01a_PBS/03c_IQTree.pbs
+

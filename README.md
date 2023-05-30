@@ -328,18 +328,25 @@ This step will provide you with Newick formated files than can be viewed/edited 
 
 
 ```bash
-iqtree
+iqtree -s ALIGNMENT_FILE --prefix OUTPRE -m MFP -alrt 1000 -B 1000 -T THREADS
 ``` 
+
+    - -m MFP is default behavior. Model finder plus. Algorithmically find the best substitution model.
+    - use -st CODON for protein alignments
+    - -B 1000 to perform 1000 bootstraps using ultrafast bootstrap apporximation (UFBOOT)
+    - -bnni uses a hill-climbing nearest neighbor interchange (NNI) to reduce the risk of overestimating branch supports
+    - -alrt 1000 uses SH-like approximate likelihood ratio test [Guindon et al., 2010](https://doi.org/10.1093/sysbio/syq010)
+    - Good clades should have ≥95% UFBOOT and ≥80 alrt
 
 PBS Example: ### CHANGE TO IQTREE
 ```bash
 # Fasttree - approximate maximum likelihood tree
-qsub -v input=02a_tree_prep/my_MSA_trimmed.aln,output=02a_tree_prep/Tree_FastTree.nwk /Path/to/GitHub/repo/01a_PBS/02f_FastTree.pbs 
+qsub -v input=02a_tree_prep/my_MSA_trimmed.aln,outpre=02a_tree_prep/03c_IQTree /Path/to/GitHub/repo/01a_PBS/03c_IQTree.pbs
 ```
 
 Sbatch Example:
 ```bash
-sbatch --export input=02a_tree_prep/my_MSA_trimmed.aln,output=02a_tree_prep/Tree_FastTree.nwk /Path/to/GitHub/repo/01b_Sbatch/02f_FastTree.sbatch
+sbatch --export input=02a_tree_prep/my_MSA_trimmed.aln,outpre=02a_tree_prep/03c_IQTree /Path/to/GitHub/repo/01b_Sbatch/03c_IQTree.sbatch
 ```
 
 #### Step 4: Compute branch distance and cluster sequences into clades.
