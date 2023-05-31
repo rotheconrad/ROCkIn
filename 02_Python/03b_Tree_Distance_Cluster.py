@@ -2,14 +2,18 @@
 
 ''' Distance clustering from phylogenetic tree in newick format.
 
-Input:
-Takes newick file as input and returns leaf names of clade clusters.
+Normal Use:
+Input the newick file from IQ-Tree generated in the previous step.
+Input the concatenated fasta file of the RepSeqs and the cluster
+representatives (these should match the sequences used to build the
+multiple alignment the tree is based on)
 
-Optional Input:
-Number of clusters to use for Kmeans and similar algorithms.
-Uniprot Fasta file to parse species and gene annotations from deflines.
+Experimental/Development Use:
+Rerun with the distance matrix to experiment with clustering params.
+Re-input the distance matrix on subsequent runs instead of the newick.
+Fasta file is optional.
 
-Business:
+Normal Use:
 Converts newick file to a distance matrix and clusters using HDBSCAN.
 
 Output:
@@ -225,14 +229,14 @@ def main():
         )
     parser.add_argument(
         '-i', '--input_newick_file',
-        help='Please specify the input newick file!',
+        help='(Optional) Please specify the input newick file!',
         metavar='',
         type=str,
         required=False
         )
     parser.add_argument(
         '-d', '--input_distance_matrix_file',
-        help='Please specify the input distance matrix file!',
+        help='(Optional) Please specify the input distance matrix file!',
         metavar='',
         type=str,
         required=False

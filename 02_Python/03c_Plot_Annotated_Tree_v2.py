@@ -9,7 +9,7 @@ information layer added on top of the tree.
 
 Inputs:
     - phylogenetic tree in newick format
-    - corresponding output from 02g_Tree_Distance_Cluster.py
+    - corresponding output from 03c_Tree_Distance_Cluster.py
 
 Outputs:
     - PDF file of phylogenetic tree with metadata layers

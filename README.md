@@ -145,7 +145,7 @@ cat 01c_ebi_fasta/MCR-* >> 01c_ebi_fasta/ALL_EBI_BLAST_MATCHES.faa
 
 At this point we have a single file (ALL_EBI_BLAST_MATCHES.faa) containing all the fasta sequences from the UniProt database that returned a match to our curated RefSeqs.faa.
 
-# PART 02: Select sequences for model training
+# PART 02: Deduplicate, filter, dereplicate
 
 Part 2 is divided into the following series of steps:
 
@@ -160,7 +160,7 @@ Part 2 is divided into the following series of steps:
 
 Our goal is to build a phylogenetic tree with our curated sequences (RefSeqs.faa) and known surrounding sequence diversity (ALL_EBI_BLAST_MATCHES.faa) that we will use to make decisions about positive and negative sequence sets for training the ROCker model.
 
-#### Step 1: Remove duplicates
+#### Step 1: Deduplicate
 
 Since we have multiple verified sequences that we searched to UniProt, we likely have found overlapping search results. I wrote a Python script to deduplicate the concatenated fasta.
 
@@ -212,9 +212,9 @@ Sbatch Example:
 sbatch --export ref=RefSeqs.faa,qry=02a_tree_prep/DEDUP_EBI_BLAST_MATCHES.faa,out=02a_tree_prep/FILTER_EBI_BLAST_MATCHES.faa /Path/to/GitHub/repo/01b_Sbatch/00b_BlastP.sbatch
 ```
 
-#### Step 3: Cluster and select representative sequences
+#### Step 3: Dereplicate
 
-If you have fewer than hundreds of searched sequences (FILTER_EBI_BLAST_MATCHES.faa) at this point you can skip this step. This step reduces the number of sequences by clustering them at 90% amino acid sequence similarity and choosing one reference sequence for each cluster.
+In this step we cluster the gene sequences with MMSeqs2 and select a representative sequence for each gene cluster. If you have fewer than hundreds of searched sequences (FILTER_EBI_BLAST_MATCHES.faa) at this point you may consider skipping this step. This step reduces the number of sequences by clustering them at 90% amino acid sequence similarity and choosing one reference sequence for each cluster. Clustering the sequences also enables us to select secondary cluster representatives to use for model testing (i.e. the primary cluster representatives are the training set and then secondary representatives can be used as the testing set).
 
 Cluster with MMSeqs2
 ```bash
@@ -244,7 +244,12 @@ Sbatch Example:
 sbatch --export infile=02a_tree_prep/01_MCR_fltr_ebi_blast_fltrd.fasta,odir=02a_tree_prep /Path/to/GitHub/repo/01b_Sbatch/27c_MMSeqs2_Cluster.sbatch
 ```
 
-# PART 03: Create and trim multiple align. Build Phylogenetic tree and create clades.
+Select secondary cluster representatives.
+```bash
+python 02d_Get_Test_secReps.py -h
+```
+
+# PART 03: Create and trim multiple align. Build Phylogenetic tree and predict clades.
 
 Part 3 is divided into the following series of steps:
 
@@ -368,6 +373,8 @@ Essentially, it is up to the researcher to make good choices based on the result
 # concatenate the curated sequences and the dereplicated and filtered searched sequences
 cat RefSeqs.faa 02a_tree_prep/mmseqs_reps.fasta >> 02a_tree_prep/final_sequence_set.fasta
 
+## watch out for a new line character between the refseqs and the other sequences. RefSeq_reps.faa is commonly missing a new line character on the last sequence. If 03b script below throws a 'KeyError' it is likely that the first fasta entry of 02c_mmseqs_reps has been joined on the same line as the last sequence of RepSeqs_reps.
+
 # setup directory
 mkdir 02c_Annoted_Tree
 
@@ -376,17 +383,11 @@ scripts=/Path/to/GitHub/repo/02_Python
 
 # convert nwk to distance matrix, cluster the matrix and add annotations
 
-### 02g_Tree_Distance_Cluster.py can take a while (several hours) - especially for larger trees.
+### 03b_Tree_Distance_Cluster.py can take a while (several hours) - especially for larger trees.
 
-# For RAxML Bootstrap
-python ${scripts}/02g_Tree_Distance_Cluster.py -i 02a_tree_prep/Tree_Bootstrap_bestTree.MCL_bootstrap.RAxML -f 02a_tree_prep/final_sequence_set.fasta -o 02c_Annoted_Tree/Cluster_annotations
+python ${scripts}/03b_Tree_Distance_Cluster.py -i 02a_tree_prep/OUTPRE.treefile -f 02a_tree_prep/final_sequence_set.fasta -o 02c_Annoted_Tree/Cluster_annotations
 
-python ${scripts}/02i_Plot_Annotated_Tree_v2.py -n 02a_tree_prep/Tree_Bootstrap_bestTree.MCL_bootstrap.RAxML -a 02c_Annoted_Tree/Cluster_annotations_annotated.tsv -o ROCker_prep_tree.pdf
-
-# or for Fasttree
-python ${scripts}/02g_Tree_Distance_Cluster.py -i 02a_tree_prep/Tree_FastTree.nwk -f 02a_tree_prep/final_sequence_set.fasta -o 02c_Annoted_Tree/Cluster_annotations
-
-python ${scripts}/02i_Plot_Annotated_Tree_v2.py -n 02a_tree_prep/02a_tree_prep/Tree_FastTree.nwk -a 02c_Annoted_Tree/Cluster_annotations_annotated.tsv -o ROCker_prep_tree.pdf
+python ${scripts}/03c_Plot_Annotated_Tree_v2.py -n 02a_tree_prep/OUTPRE.treefile -a 02c_Annoted_Tree/Cluster_annotations_annotated.tsv -o Predicted_Clades_Tree.pdf
 ```
 
 ![Example phylogenetic tree labelled by assigned cluster/clade.](https://github.com/rotheconrad/ROCkIn/blob/main/05_Example_Figs/07_Example-C.png)
