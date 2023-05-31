@@ -390,6 +390,8 @@ python ${scripts}/03b_Tree_Distance_Cluster.py -i 02a_tree_prep/OUTPRE.treefile 
 python ${scripts}/03c_Plot_Annotated_Tree_v2.py -n 02a_tree_prep/OUTPRE.treefile -a 02c_Annoted_Tree/Cluster_annotations_annotated.tsv -o Predicted_Clades_Tree.pdf
 ```
 
+You can manually change the cluster assignments in Cluster_annotations_annotated.tsv and rerun 03c_Plot_Annotated_Tree_v2.py to update the clade labeled tree. You can also provide a custom colors file. See 03c_Plot_Annotated_Tree_v2.py -h for info. Alternatively, you can take the newick file to iTol or any Phylogenetic tree viewing software and analyze it as you wish. The Cluster_annotations_annotated.tsv file is still useful because it has the taxanomic classification and functional annotation assigned to the gene from the UniProt database.
+
 ![Example phylogenetic tree labelled by assigned cluster/clade.](https://github.com/rotheconrad/ROCkIn/blob/main/05_Example_Figs/07_Example-C.png)
 
 # PART 04: Make UniProt ID selections.
