@@ -219,6 +219,10 @@ To further inform our decisions from the tree, we want to know which species and
 
 Download the tree and tsv. Review to make positive and negative UniProt ID selections to give to ROCkOut.
 
+# Making clade assignment adjustments to the 05_annotated.tsv and the Clade_Tree_mph.pdf locally.
+from: /Users/rothconrad/OneDrive - Georgia Institute of Technology/00_ROCker/04_mphA/02_ROCkin
+> python ../../ROCkIn/02_Python/02i_Plot_Annotated_Tree_v2.py -a 05a_annotated.tsv -n 00_Development/RAxML_bestTree.mph_bootstrap.RAxML -o Adjusted_Tree_mph.pdf
+
 #######
 Step 03: Build ROCker Models
 #################################
@@ -234,7 +238,7 @@ Collect a pos and neg .txt file for each model within a separate directory for e
 > rockout
 
 # Download, Build and plot the model in step.
-> sbatch --export dir=model/,pos=pos.txt,neg=neg.txt ../../00b_sbatch/ROCkOut.sbatch
+> sbatch --export odir=model/,pos=pos.txt,neg=neg.txt ../../00b_sbatch/ROCkOut.sbatch
 
 # the sbatch script includes the following steps if you want to do it manually
 # Replace ${dir} with your project directory.
