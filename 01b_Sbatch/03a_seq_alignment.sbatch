@@ -11,14 +11,20 @@
 # Change to working directory
 cd $SLURM_SUBMIT_DIR
 
+# Make output directory
+if [ ! -d 03_ROCkIn_Results ]; then mkdir 03_ROCkIn_Results; fi
+
 # Load your servers clustalo module or clustalo must be available in your PATH
+module load clustal-omega # change this for your server
 
 if [ ! -s ${verified}.aln ]
   then
-	clustalo -i $verified -o ${verified}.aln
+        n1=`basename ${verified}`
+        clustalo -i $verified -o 03_ROCkIn_Results/03a_${n1}.aln --threads 12
 fi
 
-clustalo -i $newseqs -o ${newseqs}.aln --profile1 ${verified}.aln --threads 12
+n2=`basename ${newseqs} | cut -d_ -f2-`
+clustalo -i $newseqs -o 03_ROCkIn_Results/03a_${n2}.aln --profile1 03_ROCkIn_Results/03a_${n1}.aln --threads 12
 
 ## Run Log:
 ## sbatch --export verified=,newseqs= /Path/to/GitHub/repo/01b_Sbatch/02d_seq_alignment.sbatch

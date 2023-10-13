@@ -24,6 +24,9 @@ if [ ! -s ${ref}.pdb ]
         makeblastdb -dbtype prot -in $ref
 fi
 
+# Make output directory
+if [ ! -d 02b_filter ]; then mkdir 02b_filter; fi
+
 # Run Blast
 blastp -num_threads 2 -max_target_seqs 10 \
 -db ${ref} -query ${qry} -out ${out}.blast  -subject_besthit -outfmt \
@@ -37,6 +40,7 @@ python ${scripts}/02b_Blastp_filter_hist.py -i ${out}.blast -o ${out}
 
 # Get Blast Filtered Fasta Sequence
 python ${scripts}/02c_Get_Fasta_from_Filtered_Blast.py -b ${out}.fltrdBstHts.blst -q ${qry} -o ${out}_blast_fltrd.fasta
+python ${scripts}/02c_Get_Fasta_from_Filtered_Blast.py -b 02b_filter/${out}_pID100.blst -q ${qry} -o 02b_filter/${out}_pID100.fa
 
 ## Run Log ##
 ## sbatch --export ref=OG.faa,qry=derep_representatives.faa,out=out.blast /Path/to/GitHub/repo/01b_Sbatch/00b_BlastP.sbatch
