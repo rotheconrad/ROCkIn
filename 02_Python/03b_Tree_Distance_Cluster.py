@@ -86,6 +86,7 @@ def distance_matrix_cluster(df, outpre):
     # HDBSCAN
     print('\n\t\t\t\tRunning HDBSCAN algorithm ...')
     min_cluster = int(len(df) * 0.02) # min cluster sized based on input points
+    if min_cluster < 2: min_cluster = 2 # min_cluster must be greater than 1
     epsilon = float(np.quantile(df.to_numpy().ravel(), 0.01)) # epsilong to 10% quantile
     hdb = hdbscan.HDBSCAN(
                         metric='precomputed',
