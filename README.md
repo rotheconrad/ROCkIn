@@ -64,7 +64,7 @@ Specialized databases are a good starting resources such as the [NCBI ref gene d
 
 When curating sequences, it is insightful to look at a multiple sequence alignment, a phylogenetic tree such as a quick neighbor joining tree, and/or a clustered heatmap of sequence similarity. There are many approaches to this. We will outline a quick and easy one here utilizing EBI's website and we provide a Python script to build a sequence similarity heatmap from results.
 
- 1. [Clustal Omega](https://www.ebi.ac.uk/Tools/msa/clustalo/). Select Pearson/FASTA as the output format in step 2.
+ 1. [Clustal Omega](https://www.ebi.ac.uk/jdispatcher/msa/clustalo). Select Pearson/FASTA as the output format in step 2.
  2. Download the alignment file and view it with your favorite multiple sequence alignment tool such as [AliView](https://ormbunkar.se/aliview/).
  3. Under the "Results Viewers" tab, select "Send to Simple Phylogeny" at the bottom of the options. In STEP 2 of Simple Phylogeny, turn on the distance correction, exclude gaps, and P.I.M. (percent identity matrix) options.
  4. At this point you should see a phylogram of the results. You can scroll down and "View Phylogenetic Tree File" which is in newick format (.nwk). You can save this file and view/edit it with tools such as [FigTree](http://tree.bio.ed.ac.uk/software/figtree/) or [iTol](https://itol.embl.de/).
