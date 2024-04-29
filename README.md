@@ -41,6 +41,8 @@ The steps are left separately so the user can more easily follow the workflow, a
 - [hdbscan](https://hdbscan.readthedocs.io/)
 - [pycircos](https://github.com/ponnhide/pyCircos)
 
+*Note GCC may need to be installed for hdbscan ([https://anaconda.org/conda-forge/gcc](https://anaconda.org/conda-forge/gcc))*
+
 #### References
 
 1. Aaron Swartz, Kristian Glass, T. Carter Baxter. https://github.com/tBaxter/xmltramp2, 2002
@@ -140,7 +142,7 @@ Now we will parse the .dat file to retrieve the corresponding fasta sequences, a
 for d in 01b_ebi_dat/*; do n=`basename $d`; echo $n; python /Path/to/GitHub/repo/02_Python/01d_parse_dat_file.py -i $d -o 01c_ebi_fasta/${n}.fasta; done
 
 # concatenate to single fasta file
-cat 01c_ebi_fasta/MCR-* >> 01c_ebi_fasta/ALL_EBI_BLAST_MATCHES.faa
+cat 01c_ebi_fasta/*.fasta >> 01c_ebi_fasta/ALL_EBI_BLAST_MATCHES.faa
 ```
 
 At this point we have a single file (ALL_EBI_BLAST_MATCHES.faa) containing all the fasta sequences from the UniProt database that returned a match to our curated RefSeqs.faa.
@@ -195,9 +197,9 @@ blastp -num_threads 2 -max_target_seqs 10 \
 # Set python script directory
 scripts=/Path/to/GitHub/repo/02_Python
 # filter blast results
-python ${scripts}/02b_Blastp_filter_hist.py -i 02a_tree_prep/FILTER_EBI_BLAST_MATCHES.blast -o 02a_tree_prep/FILTER_EBI_BLAST_MATCHES.fltrd.blast
+python ${scripts}/02b_Blastp_filter_hist.py -i 02a_tree_prep/FILTER_EBI_BLAST_MATCHES.blast
 # retrieve fasta sequences for the filtered blast results
-python ${scripts}/02c_Get_Fasta_from_Filtered_Blast.py -b 02a_tree_prep/FILTER_EBI_BLAST_MATCHES.fltrd.blast -q 02a_tree_prep/DEDUP_EBI_BLAST_MATCHES.faa -o 02a_tree_prep/FILTER_EBI_BLAST_MATCHES.faa
+python ${scripts}/02c_Get_Fasta_from_Filtered_Blast.py -b 02a_tree_prep/FILTER_EBI_BLAST_MATCHES_fltrdBstHts.blst -q 02a_tree_prep/DEDUP_EBI_BLAST_MATCHES.faa -o 02a_tree_prep/FILTER_EBI_BLAST_MATCHES.faa
 ```
 
 ![Example histogram figures for Blast sequence alignments.](https://github.com/rotheconrad/ROCkIn/blob/main/05_Example_Figs/02_Example-B.png)
